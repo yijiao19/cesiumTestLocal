@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Use correct character set. -->
+  <meta charset="utf-8">
+  <!-- Tell IE to use the latest, best version. -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <title>空气质量3D网格化展示</title>
+  <script src="/libs/d3/3.5.17/d3.min.js"></script>
+  <script src="/libs/d3/d3.tip.js"></script>
+  <script src="/libs/Cesium/1.31/Cesium.js"></script>
+  <style>
+    @import url(/libs/bootstrap/css/bootstrap.min.css);
+    @import url(/libs/bootstrap/plugins/bootstrap-slider/slider.css);
+    @import url(/libs/bootstrap/plugins/bootstrap-select/bootstrap-select.min.css);
+    @import url(/libs/Cesium/1.31/Widgets/widgets.css);
+    @import url(/styles/styles.css);
+  </style>
+</head>
+
+<body>
+    <div id="globe">
+        <div id="cesiumContainer"></div>
+        <select id="selectMap" class="toolbar-right cesium-button">
+          <option value="satelliteMap">卫星+地形</option>
+          <option value="streetMap">地图</option>
+        </select>
+        <select id="selectLayer" class="toolbar-right cesium-button" style="display:none">
+            <option value="none">无</option>
+            <option value="interpolation">监测插值</option>
+            <option value="windTemp">风温场</option>
+        </select>
+        <div id="showToolBar" class="toolbar-left cesium-button">预报</div>
+        <div id="showMonitor" class="toolbar-left2 cesium-button">实况</div>
+        <div id="histogram"></div>
+        <div id="charts" style="display:none">
+          <div class="profile" id="chart1"></div>
+          <div class="profile" id="chart2"></div>
+          <div class="profile" id="chart3"></div>
+        </div>
+    </div>
+  <div id="toolbar">
+    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="false">
+        <div class="panel panel-default">
+        <div class="panel-heading" role="tab" id="headingOne">
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn tab-btn btn-default btn-primary">
+                    <input type="radio" name="taboptions" id="filter" checked> 过滤选择项
+                </label>
+                <label class="btn tab-btn btn-default">
+                    <input type="radio" name="taboptions" id="vertical"> 剖面图
+                </label>
+            </div>
+            <span id="hideToolBar" class="btn glyphicon glyphicon-remove"></span>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+            <div class="panel-body">
+            <form id="form-vertical" class="form-horizontal" style="display:none">
+                <div class="col-sm-12">
+                <label id="verContentLable" class="control-label"></label>
+                </div>
+                <br /><br />
+                <div class="form-group">
+                <label for="vertical-height" class="col-sm-2 control-label">高度</label>
+                <div class="col-sm-10">
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id=“r_100” value="100m" checked> 100m
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id="r_200" value="200m"> 200m
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id="r_500" value="500m"> 500m
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id="r_1000" value="1000m"> 1000m
+                    </label>
+                </div>
+                </div>
+                <br />
+                <div class="form-group">
+                <label for="vertical-long" class="col-sm-2 control-label">经向</label>
+                <div class="col-sm-10">
+                    <input id="vertical-long" type="text" class="slider" value="" data-slider-min="0" data-slider-max="193" data-slider-step="1"
+                    data-slider-value="119" />
+                </div>
+                </div>
+                <br />
+                <div class="form-group">
+                <label for="vertical-lat" class="col-sm-2 control-label">纬向</label>
+                <div class="col-sm-10">
+                    <input id="vertical-lat" type="text" class="slider" value="" data-slider-min="0" data-slider-max="193" data-slider-step="1"
+                    data-slider-value="100" />
+                </div>
+                </div>
+            </form>
+
+            <form id="form-filter" class="form-horizontal">
+                <div id="form-color" class="form-group">
+                <label for="color" id="color-label" class="col-sm-2 control-label">色板</label>
+                <div class="col-sm-10">
+                    <div>
+                    <select id="colorArray"></select>
+                    </div>
+                    <p />
+                    <div id="colorbar">
+                    </div>
+                </div>
+                </div>
+                <div id="form-time" class="form-group">
+                <label for="time" id="time-label" class="col-sm-2 control-label">时间</label>
+                <div class="col-sm-10">
+                    <div>
+                    <label id="timeLabel">2017-02-25 23:00:00:00</label>
+                    </div>
+                    <div>
+                    <button id="nav-backward-more"><span class="glyphicon glyphicon-fast-backward"></span></button> –
+                    <button id="nav-backward"><span class="glyphicon glyphicon-step-backward"></span></button> –
+                    <button id="nav-forward"><span class="glyphicon glyphicon-step-forward"></span></button> –
+                    <button id="nav-forward-more"><span class="glyphicon glyphicon-fast-forward"></span></button></div>
+                </div>
+                </div>
+
+                <div id="form-pollute" class="form-group">
+                <label id="elevate" class="col-sm-2 control-label">对象</label>
+                <div class="col-sm-10">
+                    <label class="radio-inline radio-pad">
+                        <input type="radio" name="pollutRadios" id=“r_pm2_5” value="pm2_5" checked> PM2.5
+                    </label>
+                    <label class="radio-inline radio-pad">
+                        <input type="radio" name="pollutRadios" id="r_pm10" value="pm10"> PM10
+                    </label>
+                    <label class="radio-inline radio-pad">
+                        <input type="radio" name="pollutRadios" id="r_so2" value="so2"> SO2
+                    </label>
+                    <label class="radio-inline radio-pad">
+                        <input type="radio" name="pollutRadios" id="r_no2" value="no2"> NO2
+                    </label>
+                    <label class="radio-inline radio-pad">
+                        <input type="radio" name="pollutRadios" id="r_co" value="co"> CO
+                    </label>
+                    <label class="radio-inline radio-pad">
+                        <input type="radio" name="pollutRadios" id="r_o3" value="o3"> O3
+                    </label>
+                    <label class="radio-inline radio-pad">
+                        <input type="checkbox" name="pblhcheck" id="c_pblh" value="pblh"> PBLH
+                    </label>
+                </div>
+                </div>
+
+                <div id="form-long" class="form-group">
+                <label for="long" id="long-label" class="col-sm-2 control-label">经度</label>
+                <div class="col-sm-10">
+                    <input id="long" type="text" class="slider" value="" data-slider-min="60" data-slider-max="150" data-slider-step="1" data-slider-value="[60,150]"
+                    />
+                </div>
+                </div>
+                <br />
+                <div id="form-lat" class="form-group">
+                <label for="lat" id="lat-label" class="col-sm-2 control-label">纬度</label>
+                <div class="col-sm-10">
+                    <input id="lat" type="text" class="slider" value="" data-slider-min="0" data-slider-max="65" data-slider-step="1" data-slider-value="[0, 65]"
+                    />
+                </div>
+                </div>
+                <br/>
+                <div id="form-height" class="form-group">
+                <label for="height" id="height-label" class="col-sm-2 control-label">高度</label>
+                <div class="col-sm-10">
+                    <input id="height" type="text" class="slider" value="" data-slider-min="0" data-slider-max="15" data-slider-step="1" data-slider-value="[1,15]"
+                    />
+                </div>
+                </div>
+                <br/>
+                <div id="form-value" class="form-group">
+                <label for="ansi" id="ansi-label" class="col-sm-2 control-label">数值</label>
+                <div class="col-sm-10">
+                    <input id="ansi" type="text" class="slider" value="" data-slider-min="30" data-slider-max="600" data-slider-step="5" data-slider-value="[5,500]"
+                    />
+                </div>
+                </div>
+            </form>
+            </div>
+        </div>
+        </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="/libs/jQuery/jquery-2.2.3.min.js"></script>
+  <script type="text/javascript" src="/libs/bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/libs/bootstrap/plugins/bootstrap-slider/bootstrap-slider.js"></script>
+  <script type="text/javascript" src="/libs/bootstrap/plugins/bootstrap-select/bootstrap-select.min.js"></script>
+  <script type="text/javascript" src="/libs/lodash/3.10.1/lodash.min.js"></script>
+  <script type="text/javascript" src="/libs/moment/moment.min.js"></script>
+  <script type="text/javascript" src="/libs/bluebird/3.5.0/bluebird.min.js"></script>
+  <script type="text/javascript" src="/js/0606/colormap.min.js"></script>
+  <script type="text/javascript" src="/js/0606/factory.min.js"></script>
+  <script type="text/javascript" src="/js/0606/unimap3D.js"></script>
+  <script type="text/javascript" src="/js/0606/index.js"></script>
+</body>
+
+</html>

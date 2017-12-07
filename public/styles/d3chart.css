@@ -1,0 +1,68 @@
+#charts {
+	display:block;
+	position: absolute;
+	top: 20px;
+	left: 30%;
+}
+
+#chart1 {
+	display:block;
+	position: absolute;
+}
+
+#chart2 {
+	display:block;
+	position: absolute;
+}
+
+#chart3 {
+	display:block;
+	position: absolute;
+}
+#chart1-1 {
+	display:none;
+	position: absolute;
+}
+#chart2-1 {
+	display:none;
+	position: absolute;
+}
+#chart3-1 {
+	display:none;
+	position: absolute;
+}
+.profile {
+	background: rgba(42, 42, 42, 0.8);
+	border-radius: 7px;
+	-webkit-transform: scale(0.2);
+	-webkit-transform-origin: 0 0;
+	-webkit-transition-property: -webkit-transform;
+	-webkit-transition-duration: 1s;
+	-moz-transform: scale(0.2);
+	-moz-transform-origin: 0 0;
+	-moz-transition-property: -moz-transform;
+	-moz-transition-duration: 1s;
+	transform: scale(0.2);
+	transform-origin: 0 0;
+	transition-property: transform;
+	transition-duration: 1s;
+}
+
+.profile:hover {
+	-webkit-transform: scale(0.75);
+	-moz-transform: scale(0.75);
+	transform: scale(0.75);
+}
+
+.label, .tick {
+	fill: #eee;
+}
+
+.year {
+    font-size: 40px;
+}
+
+.domain {
+	fill: none;
+	stroke: #eee;
+}

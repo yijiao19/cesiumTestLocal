@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!--[if lte IE 8]><html class='lt-ie9 no-js' lang='en'><![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+    <script type="text/javascript">
+        var JUST_ON_TOUCH_DEVICES = true;
+        var ref = document.referrer
+    </script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>mapalupa</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="/static/favicon/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="57x57" href="/static/favicon/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/static/favicon/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/favicon/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/static/favicon/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/favicon/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/favicon/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/static/favicon/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/favicon/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon-180x180.png">
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/static/favicon/android-chrome-192x192.png" sizes="192x192">
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-16x16.png" sizes="16x16">
+    <link rel="manifest" href="/static/favicon/manifest.json">
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="scripts/modernizr.js"></script>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries-->
+    <!--[if lt IE 9]>
+  <script src="scripts/shims.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+    <!--[if lte IE 7]>
+  <p class='browsehappy'>You are using an <strong>outdated</strong> browser. Please <a href='http://browsehappy.com/''>upgrade your browser</a> to improve your experience.</p>
+  <![endif]-->
+    <div id="loadscreen">
+        <div id="loading-spacer">
+            <div id="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+        </div>
+    </div>
+    <div id="container">
+        <div id="cesiumview"></div>
+        <div id="legends"></div>
+    </div>
+    <script src="bower_components/cesium/Build/Cesium/Cesium.js"></script>
+    <script src="bower_components/Tocca.js/Tocca.min.js"></script>
+    <script src="(client)"></script>
+    <script src="scripts/main.js"></script>
+</body>
+
+</html>
