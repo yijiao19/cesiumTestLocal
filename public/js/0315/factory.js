@@ -143,7 +143,7 @@ var products = function () {
                     units: [
                         { label: "µg/m3", conversion: function (x) { return x; } }
                     ],
-                    valueRange: { min: 30, max: 600, step: 5, value: [30, 500], unit: "µg/m3" },
+                    valueRange: { min: 30, max: 600, step: 5, value: [30, 400], unit: "µg/m3" },
                     color: function (pm) {
                         var colorString = this.colorScale(pm)
                         var rgbcolor = new Cesium.Color.fromCssColorString(colorString);

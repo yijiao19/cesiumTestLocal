@@ -1,5 +1,5 @@
 //// version:1.0        author:sunzq        Email:zengqiang365@163.com
-var airView = initViewer('#cesiumContainer', "http://localhost:4002",
+var airView = initViewer('#cesiumContainer', "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage",
   "http://10.192.25.154:4002/?", {
     satelliteMapUrl: 'http://localhost:4002/maps/satellite/{z}/{x}/{y}.png',
     streetMapUrl: 'http://localhost:4002/maps/street/{z}/{x}/{y}.png',
@@ -280,7 +280,7 @@ function initProfile() {
     }
     //绘制静态图片png
     else {
-      drawImage(chart.id, chart.name, chart.vtype, chart.initNum);
+      //drawImage(chart.id, chart.name, chart.vtype, chart.initNum);
     }
 
 
