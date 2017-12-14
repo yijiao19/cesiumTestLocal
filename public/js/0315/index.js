@@ -1,5 +1,7 @@
 //// version:1.0        author:sunzq        Email:zengqiang365@163.com
-var airView = initViewer('#cesiumContainer', "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage",
+//var airView = initViewer('#cesiumContainer', "http://localhost:4002",
+var airView = initViewer('#cesiumContainer',
+  "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage",
   "http://10.192.25.154:4002/?", {
     satelliteMapUrl: 'http://localhost:4002/maps/satellite/{z}/{x}/{y}.png',
     streetMapUrl: 'http://localhost:4002/maps/street/{z}/{x}/{y}.png',
@@ -7,7 +9,7 @@ var airView = initViewer('#cesiumContainer', "http://172.18.0.15:8080/rasdaman/o
     defaultLonEnt: 119,
     defaultLatEnt: 100,
     realHeight: false
-    //realHeight: true
+      //realHeight: true
   })
 airView.setFocus(119, 40, 10000000.0);
 airView.start();
@@ -164,7 +166,7 @@ var chartArray = [
     vtype: "h",
     initNum: "0.5"
   }
-//test渲染图片、xxxImage渲染Plotly矢量图
+  //test渲染图片、xxxImage渲染Plotly矢量图
 ];
 
 var longslider;
@@ -214,7 +216,7 @@ function buildVlatSlider() {
     console.log("lat" + latNum);
     drawImage(chartArray[4].id, chartArray[4].name, chartArray[4].vtype,
       latNum, drawLat);
-     });
+  });
 }
 buildVlatSlider();
 
@@ -405,7 +407,7 @@ function drawHeightImage(graphDiv, name, data, callback) {
   var pollute = new Array();
 
   var coverageId = "wrfchem_ll_4D";
-  var ansi = "ansi(%222017-05-19T09:00:00.000Z%22)";
+  var ansi = "ansi(%222017-05-20T06:00:00.000Z%22)";
   var bottom_top = "bottom_top(" + data + ")";
   var lat_slicing = "Lat(" + data + ")";
   var long_slicing = "Long(" + data + ")";
@@ -413,7 +415,7 @@ function drawHeightImage(graphDiv, name, data, callback) {
   var format = "application/json";
   var dataType = bottom_top;
   var imgpath;
-  
+
   var srcPolluteJson =
     "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
     "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
@@ -435,7 +437,7 @@ function drawHeightImage(graphDiv, name, data, callback) {
       opacity: 1,
       zmax: 100,
       zmin: 0,
-      
+
       zsmooth: 'best',
       colorscale: 'Jet',
       showscale: false,
@@ -529,7 +531,7 @@ function drawImage(graphDiv, name, type, data, callback) {
   var pollute = new Array();
 
   var coverageId = "wrfchem_ll_4D";
-  var ansi = "ansi(%222017-05-19T09:00:00.000Z%22)";
+  var ansi = "ansi(%222017-05-20T06:00:00.000Z%22)";
   var bottom_top = "bottom_top(" + data + ")";
   var lat_slicing = "Lat(" + data + ")";
   var long_slicing = "Long(" + data + ")";
@@ -571,12 +573,12 @@ function drawImage(graphDiv, name, type, data, callback) {
       opacity: 1,
       zmax: 100,
       zmin: 0,
-  
+
       zsmooth: 'best',
       colorscale: 'Jet',
       showscale: false,
     };
-   
+
     var data = [trace1];
 
     var layout = {
@@ -588,7 +590,7 @@ function drawImage(graphDiv, name, type, data, callback) {
         t: 0,
         pad: 0
       },
- 
+
     };
     Plotly.newPlot(graphDiv, data, layout)
       .then(

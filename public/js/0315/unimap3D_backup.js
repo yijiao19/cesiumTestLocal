@@ -561,6 +561,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
         var geturl = configuration.dataServerAddr +
           "/data/pollute/2015052506/" + polluteTime + a;
         //var geturl = "/data/current-" + a;
+        console.log(geturl);
         Cesium.loadJson(geturl).then(function(jsonData) {
           load(overlay.data(jsonData), b);
         }).otherwise(function(error) {
