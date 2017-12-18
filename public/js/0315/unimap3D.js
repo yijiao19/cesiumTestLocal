@@ -533,7 +533,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
       for (var j = 0; j < builder[i].length; j++) {
 
         var tvalue = builder[i][j];
-        if ((tvalue >= 25) && (tvalue <= maxValue)) {
+        if ((tvalue >= 30) && (tvalue <= maxValue)) {
           if (configuration.realHeight) {
             height = positionGrid[level][i] * 100;
           }
@@ -613,6 +613,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
   //设置时间
   function setDate(hours) {
     configuration.time.add(hours, 'h');
+    console.log(configuration.time);
     reloadData();
     reBuildPBLH();
   }
