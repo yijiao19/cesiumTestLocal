@@ -30,7 +30,12 @@ function buildFilters(farray) {
         lonRange: $('#long').val().split(","),
         heightRange: $('#height').val().split(","),
         valRange: $('#ansi').val().split(",")
-      })
+      });
+      airView.setHeightEntSize();
+      var heightNum = $('#vertical-height').val();
+      airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
+        heightNum, drawHeight);
+
     });
   })
 }
@@ -56,7 +61,8 @@ $("[name=pollutRadios]").on('click', function() {
       lonRange: $('#long').val().split(","),
       heightRange: $('#height').val().split(","),
       valRange: $('#ansi').val().split(",")
-    })
+    });
+
   });
   airView.reloadData();
   reBuildImage();
@@ -201,7 +207,7 @@ function buildVlonSlider() {
     var lonNum = $('#vertical-long').val() - 0.05;
 
     airView.setLonEntPosition(lonNum);
-    drawImage(chartArray[3].id, chartArray[3].name, chartArray[3].vtype,
+    airView.drawImage(chartArray[3].id, chartArray[3].name, chartArray[3].vtype,
       lonNum, drawLon);
 
   });
@@ -219,7 +225,7 @@ function buildVlatSlider() {
     var latNum = $('#vertical-lat').val();
     airView.setLatEntPosition(latNum);
     console.log("lat" + latNum);
-    drawImage(chartArray[4].id, chartArray[4].name, chartArray[4].vtype,
+    airView.drawImage(chartArray[4].id, chartArray[4].name, chartArray[4].vtype,
       latNum, drawLat);
   });
 }
@@ -235,7 +241,7 @@ function buildVheightSlider() {
     airView.setHeightEntPosition(heightNum - 0.5);
     //console.log("buildVheightSlider");
     //console.log(currentTime.utc());
-    drawHeightImage(chartArray[5].id, chartArray[5].name,
+    airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
       heightNum, drawHeight);
   });
 }
@@ -327,316 +333,12 @@ function initProfile() {
 
 initProfile();
 
-//绘制plotly矢量图
-function drawPlotly(graphDiv, name, type, data, callback) {
-  var xAxis = new Array(); //x
-  var yAxis = new Array(); //y
-  var pollute = new Array();
-
-  var coverageId = "wrfchem_ll_4D";
-  //var ansi = "ansi(%222017-05-19T09:00:00.000Z%22)";
-  var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
-    "Z%22)";
-  var bottom_top = "bottom_top(" + data + ")";
-  var lat_slicing = "Lat(" + data + ")";
-  var long_slicing = "Long(" + data + ")";
-  var range = "pm25";
-  var format = "application/json";
-  var dataType;
-  var imgpath;
-
-  switch (type) {
-    case "h":
-      dataType = bottom_top;
-      break;
-    case "lon":
-      dataType = long_slicing;
-      break;
-    case "lat":
-      dataType = lat_slicing;
-      break;
-    default:
-
-  }
-  var srcPolluteJson =
-    "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
-    "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
-    dataType +
-    "&RANGESUBSET=" + range + "&FORMAT=" + format;
-  //var srcJson = "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&RANGESUBSET=pm25&FORMAT=application/json";
-  console.log(srcPolluteJson);
-  Plotly.d3.json(srcPolluteJson, function(figure) {
-    pollute = figure;
-    for (var i = 0; i < pollute.length; i++)
-      for (var j = 0; j < pollute[i].length; j++) {
-        if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
-      }
-    for (var i = 0; i < 360; i++) {
-      xAxis.push(14.95 + 0.1 * i);
-    }
-    for (var i = 0; i < 30; i++) {
-      yAxis.push(84.95 + 0.1 * i);
-    }
-    //console.log(long);
-    var trace = {
-      y: yAxis,
-      x: xAxis,
-      z: figure,
-      type: 'heatmap',
-      zsmooth: 'best',
-      colorscale: 'Jet',
-    };
-
-    var data = [trace];
-
-    var layout = {
-      title: name,
-      xaxis: {
-        title: 'latitude',
-        dtick: 1,
-        ticklen: 18,
-      },
-      yaxis: {
-        title: 'longtitude',
-      },
-
-    };
-    Plotly.newPlot(graphDiv, data, layout);
-
-  });
-
-}
-
-//绘制水平剖面图+中国地图topojson
-function drawHeightImage(graphDiv, name, data, callback) {
-  console.log(graphDiv);
-  var id = "#" + graphDiv;
-  var d3 = Plotly.d3.select(id);
-  var img_jpg = d3.select("#img-export");
-  var pollute = new Array();
-
-  var coverageId = "wrfchem_ll_4D";
-  //var ansi = "ansi(%222017-05-20T06:00:00.000Z%22)";
-  var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
-    "Z%22)";
-  var bottom_top = "bottom_top(" + data + ")";
-  //var lat_slicing = "Lat(" + data + ")";
-  //var long_slicing = "Long(" + data + ")";
-  var range = "pm25";
-  var format = "application/json";
-  var dataType = bottom_top;
-  var imgpath;
-
-  var srcPolluteJson =
-    "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
-    "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
-    dataType +
-    "&RANGESUBSET=" + range + "&FORMAT=" + format;
-  //var srcJson = "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&RANGESUBSET=pm25&FORMAT=application/json";
-  console.log("drawHeightImage");
-  console.log(srcPolluteJson);
-  Plotly.d3.json(srcPolluteJson, function(figure) {
-    pollute = figure;
-    for (var i = 0; i < pollute.length; i++)
-      for (var j = 0; j < pollute[i].length; j++) {
-        if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
-      }
-
-    //console.log(long);
-    var trace1 = {
-      type: 'heatmap',
-      z: figure,
-      opacity: 1,
-      zmax: 100,
-      zmin: 0,
-
-      zsmooth: 'best',
-      colorscale: 'Jet',
-      showscale: false,
-    };
-    var trace2 = {
-      type: 'scattergeo',
-      mode: 'markers',
-      lon: [100],
-      lat: [35],
-      marker: {
-        size: 7,
-        color: '#bebada'
-      },
-    };
-    var data = [trace2, trace1];
-
-    var layout = {
-      paper_bgcolor: '#7f7f7f',
-      width: 1000,
-      height: 785.670278904547,
-      margin: {
-        l: 0,
-        r: 0,
-        b: 0,
-        t: 0,
-        pad: 0
-      },
-      geo: {
-        scope: 'asia',
-        resolution: 110,
-        projection: {
-          'type': "equirectangular"
-        },
-        lonaxis: {
-          showgrid: true,
-          dtick: 5,
-          'range': [85, 131]
-        },
-        lataxis: {
-          showgrid: true,
-          dtick: 5,
-          'range': [15, 51]
-        },
-        bgcolor: 'rgba(0,0,0,0)',
-        showrivers: false,
-        rivercolor: '#fff',
-        showlakes: false,
-        lakecolor: '#fff',
-        showland: false,
-        landcolor: '#EAEAAE',
-        showcountries: false,
-        countrycolor: '#000',
-        subunitwidth: 1.5,
-
-        showsubunits: true,
-        subunitcolor: '#fff'
-      }
-    };
-    Plotly.newPlot(graphDiv, data, layout)
-      .then(
-        function(gd) {
-          Plotly.toImage(gd, {
-              height: 785.670278904547,
-              width: 1000
-            })
-            .then(
-              function(url) {
-                img_jpg.attr("src", url);
-                callback(url);
-                return Plotly.toImage(gd, {
-                  format: 'png',
-                  height: 785.670278904547,
-                  width: 1000
-                });
-              }
-            )
-        })
-
-    ;
-
-  });
-
-}
-
-//绘制径向纬向剖面图图像
-function drawImage(graphDiv, name, type, data, callback) {
-  console.log(graphDiv);
-  var id = "#" + graphDiv;
-  var d3 = Plotly.d3.select(id);
-  var img_jpg = d3.select("#img-export");
-  var pollute = new Array();
-
-  var coverageId = "wrfchem_ll_4D";
-  var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
-    "Z%22)";
-  var bottom_top = "bottom_top(" + data + ")";
-  var lat_slicing = "Lat(" + data + ")";
-  var long_slicing = "Long(" + data + ")";
-  var range = "pm25";
-  var format = "application/json";
-  var dataType;
-  var imgpath;
-  switch (type) {
-    case "h":
-      dataType = bottom_top;
-      break;
-    case "lon":
-      dataType = long_slicing;
-      break;
-    case "lat":
-      dataType = lat_slicing;
-      break;
-    default:
-
-  }
-  var srcPolluteJson =
-    "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
-    "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
-    dataType +
-    "&RANGESUBSET=" + range + "&FORMAT=" + format;
-  //var srcJson = "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&RANGESUBSET=pm25&FORMAT=application/json";
-  console.log(srcPolluteJson);
-  Plotly.d3.json(srcPolluteJson, function(figure) {
-    pollute = figure;
-    for (var i = 0; i < pollute.length; i++)
-      for (var j = 0; j < pollute[i].length; j++) {
-        if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
-      }
-
-    //console.log(long);
-    var trace1 = {
-      type: 'heatmap',
-      z: figure,
-      opacity: 1,
-      zmax: 100,
-      zmin: 0,
-
-      zsmooth: 'best',
-      colorscale: 'Jet',
-      showscale: false,
-    };
-
-    var data = [trace1];
-
-    var layout = {
-      paper_bgcolor: '#7f7f7f',
-      margin: {
-        l: 0,
-        r: 0,
-        b: 0,
-        t: 0,
-        pad: 0
-      },
-
-    };
-    Plotly.newPlot(graphDiv, data, layout)
-      .then(
-        function(gd) {
-          Plotly.toImage(gd, {
-              height: 1000,
-              width: 1000
-            })
-            .then(
-              function(url) {
-                img_jpg.attr("src", url);
-                callback(url);
-                return Plotly.toImage(gd, {
-                  format: 'png',
-                  height: 1000,
-                  width: 1000
-                });
-              }
-            )
-        })
-
-    ;
-
-  });
-
-}
-
 function reBuildImage() {
   var relon = $('#vertical-long').val();
   var relat = $('#vertical-lat').val();
   var reheight = $("input[name='vhRadios']:checked").val();
   var heightNum = $('#vertical-height').val();
-  drawHeightImage(chartArray[5].id, chartArray[5].name,
+  airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
     heightNum, drawHeight);
   $("#longImage").attr("href", airView.buildImagePath("lon", relon));
   $("#latImage").attr("href", airView.buildImagePath("lat", relat));

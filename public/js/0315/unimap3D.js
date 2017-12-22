@@ -192,6 +192,10 @@ function initViewer(eleID, dataServer, imageServer, options) {
   //剖面图的实体
   var longEntity, latEntity;
   var heightEntity;
+
+  var latRange = [15, 51];
+  var lonRange = [85, 131];
+  var heightRange = [0, 30];
   //水平剖面
   function buildHeight() {
 
@@ -201,7 +205,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
       name: "height",
       show: false,
       rectangle: {
-        coordinates: Cesium.Rectangle.fromDegrees(85.0, 15.0, 131.0, 51.0),
+        coordinates: Cesium.Rectangle.fromDegrees(lonRange[0], latRange[0],
+          lonRange[1], latRange[1]),
         material: imgpath,
         height: 3000.0,
       }
@@ -274,6 +279,11 @@ function initViewer(eleID, dataServer, imageServer, options) {
     heightEntity.rectangle.height = 30000.0 * nowNum;
   }
 
+  function setHeightEntSize() {
+    heightEntity.rectangle.coordinates = Cesium.Rectangle.fromDegrees(lonRange[
+        0], latRange[0],
+      lonRange[1], latRange[1]);
+  }
 
   function setLonImage(imgpath) {
     //console.log(imgpath);
@@ -323,7 +333,337 @@ function initViewer(eleID, dataServer, imageServer, options) {
     longEntity.show = false;
     heightEntity.show = false;
   }
+  //使用Plotly绘制剖面图热力图
 
+  //绘制plotly矢量图
+  function drawPlotly(graphDiv, name, type, data, callback) {
+    var xAxis = new Array(); //x
+    var yAxis = new Array(); //y
+    var pollute = new Array();
+
+    var coverageId = "wrfchem_ll_4D";
+    //var ansi = "ansi(%222017-05-19T09:00:00.000Z%22)";
+    var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
+      "Z%22)";
+    var bottom_top = "bottom_top(" + data + ")";
+    var lat_slicing = "Lat(" + data + ")";
+    var long_slicing = "Long(" + data + ")";
+    var range = "pm25";
+    var format = "application/json";
+    var dataType;
+    var imgpath;
+
+    switch (type) {
+      case "h":
+        dataType = bottom_top;
+        break;
+      case "lon":
+        dataType = long_slicing;
+        break;
+      case "lat":
+        dataType = lat_slicing;
+        break;
+      default:
+
+    }
+    var srcPolluteJson =
+      "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
+      "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
+      dataType +
+      "&RANGESUBSET=" + range + "&FORMAT=" + format;
+    //var srcJson = "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&RANGESUBSET=pm25&FORMAT=application/json";
+    console.log(srcPolluteJson);
+    Plotly.d3.json(srcPolluteJson, function(figure) {
+      pollute = figure;
+      for (var i = 0; i < pollute.length; i++)
+        for (var j = 0; j < pollute[i].length; j++) {
+          if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
+        }
+      for (var i = 0; i < 360; i++) {
+        xAxis.push(14.95 + 0.1 * i);
+      }
+      for (var i = 0; i < 30; i++) {
+        yAxis.push(84.95 + 0.1 * i);
+      }
+      //console.log(long);
+      var trace = {
+        y: yAxis,
+        x: xAxis,
+        z: figure,
+        type: 'heatmap',
+        zsmooth: 'best',
+        colorscale: 'Jet',
+      };
+
+      var data = [trace];
+
+      var layout = {
+        title: name,
+        xaxis: {
+          title: 'latitude',
+          dtick: 1,
+          ticklen: 18,
+        },
+        yaxis: {
+          title: 'longtitude',
+        },
+
+      };
+      Plotly.newPlot(graphDiv, data, layout);
+
+    });
+
+  }
+  //绘制径向纬向剖面图图像
+  function drawImage(graphDiv, name, type, data, callback) {
+    console.log("unimap3D: drawImage");
+    var id = "#" + graphDiv;
+    var d3 = Plotly.d3.select(id);
+    var img_jpg = d3.select("#img-export");
+    var pollute = new Array();
+
+    var coverageId = "wrfchem_ll_4D";
+    var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
+      "Z%22)";
+    var bottom_top = "bottom_top(" + data + ")";
+    var lat_slicing = "Lat(" + data + ")";
+    var long_slicing = "Long(" + data + ")";
+    var range = "pm25";
+    var format = "application/json";
+    var dataType;
+    var imgpath;
+    switch (type) {
+      case "h":
+        dataType = bottom_top;
+        break;
+      case "lon":
+        dataType = long_slicing;
+        break;
+      case "lat":
+        dataType = lat_slicing;
+        break;
+      default:
+
+    }
+    var srcPolluteJson =
+      "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
+      "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
+      dataType +
+      "&RANGESUBSET=" + range + "&FORMAT=" + format;
+    //var srcJson = "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&RANGESUBSET=pm25&FORMAT=application/json";
+    console.log(srcPolluteJson);
+    Plotly.d3.json(srcPolluteJson, function(figure) {
+      pollute = figure;
+      for (var i = 0; i < pollute.length; i++)
+        for (var j = 0; j < pollute[i].length; j++) {
+          if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
+        }
+
+      //console.log(long);
+      var trace1 = {
+        type: 'heatmap',
+        z: figure,
+        opacity: 1,
+        zmax: 100,
+        zmin: 0,
+
+        zsmooth: 'best',
+        colorscale: 'Jet',
+        showscale: false,
+      };
+
+      var data = [trace1];
+
+      var layout = {
+        paper_bgcolor: '#7f7f7f',
+        margin: {
+          l: 0,
+          r: 0,
+          b: 0,
+          t: 0,
+          pad: 0
+        },
+
+      };
+      Plotly.newPlot(graphDiv, data, layout)
+        .then(
+          function(gd) {
+            Plotly.toImage(gd, {
+                height: 1000,
+                width: 1000
+              })
+              .then(
+                function(url) {
+                  img_jpg.attr("src", url);
+                  callback(url);
+                  return Plotly.toImage(gd, {
+                    format: 'png',
+                    height: 1000,
+                    width: 1000
+                  });
+                }
+              )
+          })
+
+      ;
+
+    });
+
+  }
+
+  //绘制水平剖面图+中国地图topojson
+  function drawHeightImage(graphDiv, name, data, callback) {
+    console.log(graphDiv);
+    var xAxis = new Array();
+    var yAxis = new Array();
+    for (var i = 0; i < 360; i++) {
+      yAxis.push(14.95 + 0.1 * i);
+    }
+    for (var i = 0; i < 460; i++) {
+      xAxis.push(84.95 + 0.1 * i);
+    }
+
+    var id = "#" + graphDiv;
+    var d3 = Plotly.d3.select(id);
+    var img_jpg = d3.select("#img-export");
+    var pollute = new Array();
+
+    var coverageId = "wrfchem_ll_4D";
+    //var ansi = "ansi(%222017-05-20T06:00:00.000Z%22)";
+    var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
+      "Z%22)";
+    var bottom_top = "bottom_top(" + data + ")";
+    //var lat_slicing = "Lat(" + data + ")";
+    //var long_slicing = "Long(" + data + ")";
+    var range = "pm25";
+    var format = "application/json";
+    var dataType = bottom_top;
+    var imgpath;
+
+    var ratio;
+    var w, h;
+
+    w = lonRange[1] - lonRange[0];
+    h = latRange[1] - latRange[0];
+    ratio = w / h;
+
+
+    var srcPolluteJson =
+      "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
+      "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
+      dataType +
+      "&RANGESUBSET=" + range + "&FORMAT=" + format;
+    //var srcJson = "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&RANGESUBSET=pm25&FORMAT=application/json";
+    console.log("unimap3D:drawHeightImage");
+    console.log(latRange);
+    console.log(srcPolluteJson);
+    Plotly.d3.json(srcPolluteJson, function(figure) {
+      pollute = figure;
+      for (var i = 0; i < pollute.length; i++)
+        for (var j = 0; j < pollute[i].length; j++) {
+          if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
+        }
+
+      //console.log(long);
+      var trace1 = {
+        type: 'heatmap',
+        x: xAxis,
+        y: yAxis,
+        z: figure,
+        opacity: 1,
+        zmax: 100,
+        zmin: 0,
+
+        zsmooth: 'best',
+        colorscale: 'Jet',
+        showscale: false,
+      };
+      var trace2 = {
+        type: 'scattergeo',
+        mode: 'markers',
+        lon: [100],
+        lat: [35],
+        marker: {
+          size: 7,
+          color: '#bebada'
+        },
+      };
+      var data = [trace2, trace1];
+
+      var layout = {
+        xaxis: {
+          range: [lonRange[0], lonRange[1]]
+        },
+        yaxis: {
+          range: [latRange[0], latRange[1]]
+        },
+        paper_bgcolor: '#7f7f7f',
+        width: 1000 * ratio,
+        height: 1000,
+        margin: {
+          l: 0,
+          r: 0,
+          b: 0,
+          t: 0,
+          pad: 0
+        },
+        geo: {
+          scope: 'asia',
+          resolution: 110,
+          projection: {
+            'type': "equirectangular"
+          },
+          lonaxis: {
+            showgrid: true,
+            dtick: 5,
+            'range': [lonRange[0], lonRange[1]]
+          },
+          lataxis: {
+            showgrid: true,
+            dtick: 5,
+            'range': [latRange[0], latRange[1]]
+          },
+          bgcolor: 'rgba(0,0,0,0)',
+          showrivers: false,
+          rivercolor: '#fff',
+          showlakes: false,
+          lakecolor: '#fff',
+          showland: false,
+          landcolor: '#EAEAAE',
+          showcountries: false,
+          countrycolor: '#000',
+          subunitwidth: 1.5,
+
+          showsubunits: true,
+          subunitcolor: '#fff'
+        }
+      };
+      Plotly.newPlot(graphDiv, data, layout)
+        .then(
+          function(gd) {
+            Plotly.toImage(gd, {
+                height: 1000,
+                width: 1000 * ratio
+              })
+              .then(
+                function(url) {
+                  img_jpg.attr("src", url);
+                  //console.log(url);
+                  callback(url);
+                  return Plotly.toImage(gd, {
+                    format: 'png',
+                    height: 1000,
+                    width: 1000 * ratio
+                  });
+                }
+              )
+          })
+
+      ;
+
+    });
+
+  }
   /*****************************************************************
    * 渲染过程
    *****************************************************************/
@@ -620,9 +960,10 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
   //由筛选条件显示格点
   function setShowRange(ranges) {
-    var latRange = ranges.latRange;
-    var lonRange = ranges.lonRange;
-    var heightRange = ranges.heightRange;
+    latRange = ranges.latRange;
+    console.log(latRange);
+    lonRange = ranges.lonRange;
+    heightRange = ranges.heightRange;
     var valRange = ranges.valRange;
     var layerName = configuration.overlayType;
     if (layerName == "temp") {
@@ -711,6 +1052,10 @@ function initViewer(eleID, dataServer, imageServer, options) {
     setLonEntPosition: setLonEntPosition,
     setLatEntPosition: setLatEntPosition,
     setHeightEntPosition: setHeightEntPosition,
+    setHeightEntSize: setHeightEntSize,
+    drawHeightImage: drawHeightImage,
+    drawImage: drawImage,
+    drawPlotly: drawPlotly,
     changeMap: changeMap,
     getPixColorScale: getPixColorScale,
     reloadData: reloadData,
