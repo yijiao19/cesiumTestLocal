@@ -31,6 +31,20 @@ function buildFilters(farray) {
         heightRange: $('#height').val().split(","),
         valRange: $('#ansi').val().split(",")
       });
+
+
+      var lonNum = $('#vertical-long').val() - 0.05;
+      airView.setLonEntSize(lonNum);
+      airView.drawImage(chartArray[3].id, chartArray[3].name,
+        chartArray[3].vtype,
+        lonNum, drawLon);
+
+      var latNum = $('#vertical-lat').val();
+      airView.setLatEntSize(latNum);
+
+      airView.drawImage(chartArray[4].id, chartArray[4].name,
+        chartArray[4].vtype,
+        latNum, drawLat);
       airView.setHeightEntSize();
       var heightNum = $('#vertical-height').val();
       airView.drawHeightImage(chartArray[5].id, chartArray[5].name,

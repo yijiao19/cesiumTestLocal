@@ -293,11 +293,18 @@ function initViewer(eleID, dataServer, imageServer, options) {
   function setLonEntPosition(nowNum) {
     //console.log(nowNum);
     longEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray([
-      nowNum, imgLat[0], nowNum,
-      imgLat[imgLat.length - 1]
+      nowNum, latRange[0], nowNum,
+      latRange[1]
     ]);
   }
 
+  function setLonEntSize(num) {
+    //console.log(nowNum);
+    longEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray([
+      num, latRange[0], num,
+      latRange[1]
+    ]);
+  }
 
   function setLatImage(imgpath) {
     latEntity.wall.material = imgpath;
@@ -308,19 +315,43 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
   function setLatEntPosition(nowNum) {
     //latEntity.wall.material = imgpath;
-    var wallLatArray = new Array(11);
+    var wallLatArray = new Array();
 
     var deltaLon;
-    deltaLon = parseInt(imgLon.length / 10);
+    //deltaLon = parseInt(imgLon.length / 10);
+    deltaLon = (131 - 85) / 10;
+    var count = parseInt((lonRange[1] - lonRange[0]) / deltaLon);
     console.log(deltaLon);
-    for (var i = 0; i <= 10; i++) {
-      wallLatArray[i * 2] = imgLon[i * deltaLon];
-      wallLatArray[i * 2 + 1] = nowNum;
 
+    var templat;
+    wallLatArray[0] = lonRange[0];
+    wallLatArray[1] = nowNum;
+    for (var i = 1; i < (count); i++) {
+      templat = parseFloat(wallLatArray[(i - 1) * 2]) + deltaLon;
+      wallLatArray[i * 2] = templat.toFixed(1);
+      wallLatArray[i * 2 + 1] = nowNum;
     }
+    wallLatArray[count * 2] = lonRange[1];
+    wallLatArray[count * 2 + 1] = nowNum;
+    // wallLatArray[0] = lonRange[0];
+    // wallLatArray[1] = nowNum;
+    // while (wallLatArray[i * 2] < lonRange[1]) {
+    //   i++;
+    //   templat = parseFloat(wallLatArray[(i - 1) * 2]) + deltaLon;
+    //   wallLatArray[i * 2] = templat.toFixed(1);
+    //   wallLatArray[i * 2 + 1] = nowNum;
+    // }
+
     latEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray(wallLatArray);
   }
 
+  function setLatEntSize(num) {
+    //console.log(nowNum);
+    latEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray([
+      lonRange[0], num,
+      lonRange[1], num
+    ]);
+  }
   //剖面图示意实体的显示设置
   function setVerticalShow() {
     latEntity.show = true;
@@ -432,15 +463,28 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var format = "application/json";
     var dataType;
     var imgpath;
+    var xAxis = new Array();
+    var xRange = new Array(2);
+
     switch (type) {
       case "h":
         dataType = bottom_top;
         break;
       case "lon":
         dataType = long_slicing;
+        for (var i = 0; i < 360; i++) {
+          xAxis.push(14.95 + 0.1 * i);
+        }
+        xRange[0] = latRange[0];
+        xRange[1] = latRange[1];
         break;
       case "lat":
         dataType = lat_slicing;
+        for (var i = 0; i < 460; i++) {
+          xAxis.push(84.95 + 0.1 * i);
+        }
+        xRange[0] = lonRange[0];
+        xRange[1] = lonRange[1];
         break;
       default:
 
@@ -462,6 +506,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
       //console.log(long);
       var trace1 = {
         type: 'heatmap',
+        x: xAxis,
         z: figure,
         opacity: 1,
         zmax: 100,
@@ -475,6 +520,9 @@ function initViewer(eleID, dataServer, imageServer, options) {
       var data = [trace1];
 
       var layout = {
+        xaxis: {
+          range: [xRange[0], xRange[1]]
+        },
         paper_bgcolor: '#7f7f7f',
         margin: {
           l: 0,
@@ -1050,7 +1098,9 @@ function initViewer(eleID, dataServer, imageServer, options) {
     setLonImage: setLonImage,
     setHeightImage: setHeightImage,
     setLonEntPosition: setLonEntPosition,
+    setLonEntSize: setLonEntSize,
     setLatEntPosition: setLatEntPosition,
+    setLatEntSize: setLatEntSize,
     setHeightEntPosition: setHeightEntPosition,
     setHeightEntSize: setHeightEntSize,
     drawHeightImage: drawHeightImage,
