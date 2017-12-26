@@ -147,12 +147,12 @@ function initViewer(eleID, dataServer, imageServer, options) {
       urlArry.push(url);
     }
     var i = 0;
-    for (var lat = 15; lat <= 51; lat += 0.1) {
+    for (var lat = latRange[0]; lat <= latRange[1]; lat += 0.1) {
       imgLat[i] = lat;
       latGrid[i++] = lat;
     }
     i = 0;
-    for (var long = 85; long <= 131; long += 0.1) {
+    for (var long = lonRange[0]; long <= lonRange[1]; long += 0.1) {
       imgLon[i] = long;
       longGrid[i++] = long;
     }
@@ -169,20 +169,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
         return positionGrid;
       });
     });
-    //加载网格点纬度信息
-    // var loadLat = Cesium.loadJson("/data/coordinate/lat.json").then(function(
-    //   jsonData) {
-    //   latGrid = jsonData.XLAT;
-    //   vertical_latGrid = _.chunk(latGrid, 194);
-    //   return vertical_latGrid;
-    // });
-    // //加载网格点经度信息
-    // var loadLon = Cesium.loadJson("/data/coordinate/long.json").then(function(
-    //   jsonData) {
-    //   longGrid = jsonData.XLONG;
-    //   vertical_lonGrid = _.chunk(longGrid, 194);
-    //   return vertical_lonGrid;
-    // });
+
     return Promise.all([loadGmp]);
 
 
@@ -308,9 +295,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
   function setLatImage(imgpath) {
     latEntity.wall.material = imgpath;
-    // latEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray([73,
-    //   vertical_latGrid[nowNum][0], 135, vertical_latGrid[nowNum][0]
-    // ]);
+
   }
 
   function setLatEntPosition(nowNum) {
@@ -680,7 +665,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
           landcolor: '#EAEAAE',
           showcountries: false,
           countrycolor: '#000',
-          subunitwidth: 1.5,
+          subunitwidth: 3.0,
 
           showsubunits: true,
           subunitcolor: '#fff'
@@ -916,7 +901,19 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var maxValue = overlay.valueRange.max;
     //获取对应的色谱
     var pixColorScale = getPixColorScale();
-
+    latGrid = [];
+    longGrid = [];
+    var i = 0;
+    for (var lat = latRange[0]; lat <= latRange[1]; lat = 0.1 + parseFloat(lat)) {
+      imgLat[i] = lat;
+      latGrid[i++] = lat;
+    }
+    i = 0;
+    for (var long = lonRange[0]; long <= lonRange[1]; long = 0.1 + parseFloat(
+        long)) {
+      imgLon[i] = long;
+      longGrid[i++] = long;
+    }
     for (var i = 0; i < builder.length; i++)
       for (var j = 0; j < builder[i].length; j++) {
 
@@ -965,12 +962,19 @@ function initViewer(eleID, dataServer, imageServer, options) {
     urls.forEach(function(url, index) {
       (function(a, b) {
         //"http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&SUBSET=ansi(%222017-05-19T06:00:00.000Z%22)&SUBSET=bottom_top(0.5)&RANGESUBSET=pm25&FORMAT=application/json"
+        //"http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&SUBSET=ansi(%222017-05-20T06:00:00.000Z%22)&SUBSET=Lat(14.95,50.95)&SUBSET=Long(100,130.95)&SUBSET=bottom_top(0.5)&RANGESUBSET=pm25&FORMAT=image/png
         var coverageId = configuration.coverageId;
         var polluteTime = getPolluteTime(configuration.time);
         var heightLevel = "bottom_top(" + (0.5 + b) + ")";
+        var lonSubset = "Long(" + (lonRange[0] - 0.05) + ',' + (
+          lonRange[1] - 0.05) + ")";
+        var latSubset = "Lat(" + (latRange[0] - 0.05) + ',' + (latRange[
+          1] - 0.05) + ")";
         var geturl = configuration.dataServerAddr +
           "&COVERAGEID=" + coverageId +
           "&SUBSET=" + polluteTime +
+          "&SUBSET=" + latSubset +
+          "&SUBSET=" + lonSubset +
           "&SUBSET=" + heightLevel +
           "&RANGESUBSET=" + overlay.type +
           "&FORMAT=" + "application/json";
@@ -997,6 +1001,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
     buildLevels(overlay.levelNum);
     //加载数据
     loadData();
+
   }
   //设置时间
   function setDate(hours) {
@@ -1009,7 +1014,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
   //由筛选条件显示格点
   function setShowRange(ranges) {
     latRange = ranges.latRange;
-    console.log(latRange);
+    //console.log(latRange);
     lonRange = ranges.lonRange;
     heightRange = ranges.heightRange;
     var valRange = ranges.valRange;

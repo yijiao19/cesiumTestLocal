@@ -33,22 +33,7 @@ function buildFilters(farray) {
       });
 
 
-      var lonNum = $('#vertical-long').val() - 0.05;
-      airView.setLonEntSize(lonNum);
-      airView.drawImage(chartArray[3].id, chartArray[3].name,
-        chartArray[3].vtype,
-        lonNum, drawLon);
-
-      var latNum = $('#vertical-lat').val();
-      airView.setLatEntSize(latNum);
-
-      airView.drawImage(chartArray[4].id, chartArray[4].name,
-        chartArray[4].vtype,
-        latNum, drawLat);
-      airView.setHeightEntSize();
-      var heightNum = $('#vertical-height').val();
-      airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
-        heightNum, drawHeight);
+      //reBuildImage();
 
     });
   })
@@ -79,7 +64,7 @@ $("[name=pollutRadios]").on('click', function() {
 
   });
   airView.reloadData();
-  reBuildImage();
+  //reBuildImage();
 })
 
 $("[name='pblhcheck']").on('click', function() {
@@ -102,7 +87,8 @@ function setTimeBar() {
 function setConfigTime(num) {
   airView.setDate(num);
   setTimeBar();
-  reBuildImage();
+
+  //  reBuildImage();
 }
 $("#nav-forward").click(function(event) {
   event.preventDefault();
@@ -259,7 +245,7 @@ function buildVheightSlider() {
       heightNum, drawHeight);
   });
 }
-buildVheightSlider();
+//buildVheightSlider();
 
 //切换数据滤镜和垂直剖面图的标签
 $(".tab-btn").click(function() {
@@ -276,6 +262,8 @@ $(".tab-btn").click(function() {
     $("#form-vertical").attr('style', "display:block");
     $("#charts").attr('style', "display:block");
     airView.setVerticalShow();
+    buildVheightSlider();
+    reBuildImage();
   }
 });
 
@@ -348,13 +336,29 @@ function initProfile() {
 initProfile();
 
 function reBuildImage() {
-  var relon = $('#vertical-long').val();
+  var relon = $('#vertical-long').val() - 0.05;
   var relat = $('#vertical-lat').val();
   var reheight = $("input[name='vhRadios']:checked").val();
   var heightNum = $('#vertical-height').val();
+
+  airView.setHeightEntSize();
   airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
     heightNum, drawHeight);
-  $("#longImage").attr("href", airView.buildImagePath("lon", relon));
-  $("#latImage").attr("href", airView.buildImagePath("lat", relat));
-  $("#horiImage").attr("href", airView.buildImagePath("h", reheight));
+
+  airView.setLonEntSize(relon);
+  airView.drawImage(chartArray[3].id, chartArray[3].name,
+    chartArray[3].vtype,
+    relon, drawLon);
+
+
+  airView.setLatEntSize(relat);
+  airView.drawImage(chartArray[4].id, chartArray[4].name,
+    chartArray[4].vtype,
+    relat, drawLat);
+
+
+
+  //$("#longImage").attr("href", airView.buildImagePath("lon", relon));
+  //$("#latImage").attr("href", airView.buildImagePath("lat", relat));
+  //$("#horiImage").attr("href", airView.buildImagePath("h", reheight));
 }
