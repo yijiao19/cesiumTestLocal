@@ -263,7 +263,7 @@ $(".tab-btn").click(function() {
     $("#charts").attr('style', "display:block");
     airView.setVerticalShow();
     buildVheightSlider();
-    reBuildImage();
+    //  reBuildImage();
   }
 });
 

@@ -182,7 +182,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
   var latRange = [15, 51];
   var lonRange = [85, 131];
-  var heightRange = [0, 30];
+  var heightRange = [0, 1];
   //水平剖面
   function buildHeight() {
 
@@ -514,7 +514,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
           r: 0,
           b: 0,
           t: 0,
-          pad: 0
+          //  pad: 0
         },
 
       };
@@ -665,7 +665,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
           landcolor: '#EAEAAE',
           showcountries: false,
           countrycolor: '#000',
-          subunitwidth: 3.0,
+          subunitwidth: 1.5,
 
           showsubunits: true,
           subunitcolor: '#fff'
@@ -901,19 +901,25 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var maxValue = overlay.valueRange.max;
     //获取对应的色谱
     var pixColorScale = getPixColorScale();
-    latGrid = [];
-    longGrid = [];
-    var i = 0;
-    for (var lat = latRange[0]; lat <= latRange[1]; lat = 0.1 + parseFloat(lat)) {
-      imgLat[i] = lat;
-      latGrid[i++] = lat;
-    }
-    i = 0;
-    for (var long = lonRange[0]; long <= lonRange[1]; long = 0.1 + parseFloat(
-        long)) {
-      imgLon[i] = long;
-      longGrid[i++] = long;
-    }
+    // latGrid = [];
+    // longGrid = [];
+    // var i = 0;
+    // for (var lat = parseInt(latRange[0]); lat <= parseInt(latRange[1]); lat =
+    //   0.1 + parseFloat(lat)) {
+    //   //lat = lat.toFixed(1);
+    //
+    //   imgLat[i] = lat;
+    //   latGrid[i++] = lat;
+    // }
+    // i = 0;
+    // for (var long = parseInt(lonRange[0]); long <= parseInt(lonRange[1]); long =
+    //   0.1 + parseFloat(
+    //     long)) {
+    //   //long = long.toFixed(1);
+    //   imgLon[i] = long;
+    //   longGrid[i++] = long;
+    // }
+
     for (var i = 0; i < builder.length; i++)
       for (var j = 0; j < builder[i].length; j++) {
 
@@ -957,7 +963,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
   }
   //根据选择的图层加载数据
   var loadData = function() {
-
+    console.log("loadData");
     var urls = overlay.paths();
     urls.forEach(function(url, index) {
       (function(a, b) {
@@ -966,18 +972,19 @@ function initViewer(eleID, dataServer, imageServer, options) {
         var coverageId = configuration.coverageId;
         var polluteTime = getPolluteTime(configuration.time);
         var heightLevel = "bottom_top(" + (0.5 + b) + ")";
-        var lonSubset = "Long(" + (lonRange[0] - 0.05) + ',' + (
-          lonRange[1] - 0.05) + ")";
-        var latSubset = "Lat(" + (latRange[0] - 0.05) + ',' + (latRange[
-          1] - 0.05) + ")";
+        // var lonSubset = "Long(" + (lonRange[0] - 0.05) + ',' + (
+        //   lonRange[1] - 0.05) + ")";
+        // var latSubset = "Lat(" + (latRange[0] - 0.05) + ',' + (latRange[
+        //   1] - 0.05) + ")";
         var geturl = configuration.dataServerAddr +
           "&COVERAGEID=" + coverageId +
           "&SUBSET=" + polluteTime +
-          "&SUBSET=" + latSubset +
-          "&SUBSET=" + lonSubset +
+          //"&SUBSET=" + latSubset +
+          //  "&SUBSET=" + lonSubset +
           "&SUBSET=" + heightLevel +
           "&RANGESUBSET=" + overlay.type +
           "&FORMAT=" + "application/json";
+        console.log(geturl);
         //console.log(heightLevel);
         //var geturl = "/data/current-" + a;
         Cesium.loadJson(geturl).then(function(jsonData) {
