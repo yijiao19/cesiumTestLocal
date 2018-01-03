@@ -204,7 +204,7 @@ function buildVlonSlider() {
     tooltip_position: 'bottom',
   });
   longslider.on("slideStop", function(event) {
-    var lonNum = $('#vertical-long').val() - 0.05;
+    var lonNum = $('#vertical-long').val();
 
     airView.setLonEntPosition(lonNum);
     airView.drawImage(chartArray[3].id, chartArray[3].name, chartArray[3].vtype,
@@ -263,7 +263,7 @@ $(".tab-btn").click(function() {
     $("#charts").attr('style', "display:block");
     airView.setVerticalShow();
     buildVheightSlider();
-    //  reBuildImage();
+    reBuildImage();
   }
 });
 
@@ -336,22 +336,22 @@ function initProfile() {
 initProfile();
 
 function reBuildImage() {
-  var relon = $('#vertical-long').val() - 0.05;
+  var relon = $('#vertical-long').val();
   var relat = $('#vertical-lat').val();
   var reheight = $("input[name='vhRadios']:checked").val();
   var heightNum = $('#vertical-height').val();
 
-  airView.setHeightEntSize();
+  //airView.setHeightEntSize();
   airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
     heightNum, drawHeight);
 
-  airView.setLonEntSize(relon);
+  //airView.setLonEntSize(relon);
   airView.drawImage(chartArray[3].id, chartArray[3].name,
     chartArray[3].vtype,
     relon, drawLon);
 
 
-  airView.setLatEntSize(relat);
+  //airView.setLatEntSize(relat);
   airView.drawImage(chartArray[4].id, chartArray[4].name,
     chartArray[4].vtype,
     relat, drawLat);
