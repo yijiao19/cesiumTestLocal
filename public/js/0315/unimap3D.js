@@ -198,7 +198,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
         //水平剖面范围为边界值
         coordinates: Cesium.Rectangle.fromDegrees(84.95, 14.95,
           130.95, 50.95),
-        material: Cesium.Color.BLUE.withAlpha(0.0),
+
+        material: new Cesium.Color(0, 0, 0.51, 1),
         height: 3000.0,
       }
     });
@@ -210,38 +211,21 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var wallMinHeightArray = new Array();
     var wallMaxHeightArray = new Array();
 
-    // var deltaLon;
-    // //deltaLon = parseInt(imgLon.length / 10);
-    // deltaLon = (131 - 85) / 10;
-    // var count = parseInt((lonRange[1] - lonRange[0]) / deltaLon);
-    // console.log(deltaLon);
-    //
-    // var templat;
-    // wallLatArray[0] = lonRange[0];
-    // wallLatArray[1] = latRange[0];
-    // for (var i = 1; i <= (count); i++) {
-    //   templat = parseFloat(wallLatArray[(i - 1) * 2]) + deltaLon;
-    //   wallLatArray[i * 2] = templat.toFixed(1);
-    //   wallLatArray[i * 2 + 1] = latRange[0];
-    //   wallMinHeightArray[i - 1] = 0;
-    //   wallMaxHeightArray[i - 1] = 900000;
-    // }
-    // wallLatArray[count * 2] = lonRange[1];
-    // wallLatArray[count * 2 + 1] = latRange[0];
     // //绘制10个分隔点，保证wall是顺沿纬线绘制的
-    var wallLatArray = new Array(11);
-    var wallMinHeightArray = new Array(11);
-    var wallMaxHeightArray = new Array(11);
+
     var deltaLon;
-    deltaLon = parseInt(longGrid.length / 10);
+    deltaLon = parseInt(longGrid.length / 5);
     console.log(deltaLon);
-    for (var i = 0; i <= 10; i++) {
+
+    for (var i = 0; i <= 5; i++) {
       wallLatArray[i * 2] = longGrid[i * deltaLon];
       wallLatArray[i * 2 + 1] = latGrid[0];
       wallMinHeightArray[i] = 0;
       wallMaxHeightArray[i] = 900000;
     }
-    wallLatArray[20] = longGrid[10 * deltaLon - 1];
+    //wallLatArray[20] = longGrid[10 * deltaLon - 1];
+    wallLatArray[0] = 84.95;
+    wallLatArray[10] = 130.95;
     console.log("origin:" + wallLatArray);
     //初始剖面位置
     var initLatNum = ("defaultLatEnt" in options) ? options.defaultLatEnt :
@@ -251,10 +235,16 @@ function initViewer(eleID, dataServer, imageServer, options) {
       show: false,
       name: 'vertical-lat',
       wall: {
-        positions: Cesium.Cartesian3.fromDegreesArray(wallLatArray),
-        maximumHeights: wallMaxHeightArray,
-        minimumHeights: wallMinHeightArray,
-        material: Cesium.Color.BLUE,
+        //positions: Cesium.Cartesian3.fromDegreesArray(wallLatArray),
+        positions: Cesium.Cartesian3.fromDegreesArray([84.95, latRange[0],
+          130.95, latRange[0]
+        ]),
+        granularity: 0.01745,
+        maximumHeights: [900000, 900000],
+        minimumHeights: [0, 0],
+        // maximumHeights: wallMaxHeightArray,
+        // minimumHeights: wallMinHeightArray,
+        material: new Cesium.Color(0, 0, 0.51, 1),
 
       }
     });
@@ -274,7 +264,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
         ]),
         maximumHeights: [900000, 900000],
         minimumHeights: [0, 0],
-        material: Cesium.Color.BLUE,
+        material: new Cesium.Color(0, 0, 0.51, 1),
       }
     });
   }
@@ -326,35 +316,22 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
   function setLatEntPosition(nowNum) {
     //latEntity.wall.material = imgpath;
-    console.log("latPosition:(" + lonRange[0] + "," + nowNum +
-      "," + lonRange[1] + "," + nowNum + ")");
+
     var wallLatArray = new Array();
 
+
     var deltaLon;
-
-    deltaLon = (131 - 85) / 10;
-    var count = parseInt((lonRange[1] - lonRange[0]) / deltaLon);
+    deltaLon = parseInt(longGrid.length / 5);
     console.log(deltaLon);
-    //count++;
 
-    var templat;
-    wallLatArray[0] = lonRange[0];
-    wallLatArray[1] = nowNum;
-    for (var i = 1; i < (count); i++) {
-      templat = parseFloat(wallLatArray[(i - 1) * 2]) + deltaLon;
-      wallLatArray[i * 2] = templat.toFixed(1);
+    for (var i = 0; i <= 5; i++) {
+      wallLatArray[i * 2] = longGrid[i * deltaLon];
       wallLatArray[i * 2 + 1] = nowNum;
+
     }
-    wallLatArray[count * 2] = lonRange[1];
-    wallLatArray[count * 2 + 1] = nowNum;
-    // wallLatArray[0] = lonRange[0];
-    // wallLatArray[1] = nowNum;
-    // while (wallLatArray[i * 2] < lonRange[1]) {
-    //   i++;
-    //   templat = parseFloat(wallLatArray[(i - 1) * 2]) + deltaLon;
-    //   wallLatArray[i * 2] = templat.toFixed(1);
-    //   wallLatArray[i * 2 + 1] = nowNum;
-    // }
+    //wallLatArray[20] = longGrid[10 * deltaLon - 1];
+    wallLatArray[0] = 84.95;
+    wallLatArray[10] = 130.95;
     console.log("newwall:" + wallLatArray);
     latEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray(wallLatArray);
   }
@@ -524,7 +501,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
         type: 'heatmap',
         x: xAxis,
         z: figure,
-        opacity: 1,
+        opacity: 0.4,
         zmax: 100,
         zmin: 0,
 
@@ -537,8 +514,16 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
       var layout = {
         xaxis: {
-          range: [xRange[0], xRange[1]]
+          range: [xRange[0], xRange[1]],
+          showgrid: true,
+
+          gridcolor: '#000000',
+          gridwidth: 1,
+          tick0: xRange[0],
+          dtick: 0.1,
         },
+
+
         paper_bgcolor: '#7f7f7f',
         margin: {
           l: 0,
@@ -554,7 +539,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
           function(gd) {
             Plotly.toImage(gd, {
                 height: 1000,
-                width: 4600
+                width: (xAxis.length * 10)
               })
               .then(
                 function(url) {
@@ -563,7 +548,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
                   return Plotly.toImage(gd, {
                     format: 'png',
                     height: 1000,
-                    width: 4600
+                    width: (xAxis.length * 10)
                   });
                 }
               )
@@ -634,7 +619,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
         x: xAxis,
         y: yAxis,
         z: figure,
-        opacity: 1,
+        opacity: 0.5,
         zmax: 100,
         zmin: 0,
 
@@ -656,14 +641,26 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
       var layout = {
         xaxis: {
-          range: [lonRange[0], lonRange[1]]
+          range: [lonRange[0], lonRange[1]],
+          showgrid: true,
+
+          gridcolor: '#000000',
+          gridwidth: 1,
+
+          dtick: 0.1,
         },
         yaxis: {
-          range: [latRange[0], latRange[1]]
+          range: [latRange[0], latRange[1]],
+          showgrid: true,
+
+          gridcolor: '#000000',
+          gridwidth: 1,
+
+          dtick: 0.1,
         },
         paper_bgcolor: '#7f7f7f',
-        width: 1000,
-        height: 1000,
+        width: 3600,
+        height: 4600,
         margin: {
           l: 0,
           r: 0,
