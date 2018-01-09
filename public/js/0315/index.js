@@ -245,7 +245,7 @@ function buildVheightSlider() {
       heightNum, drawHeight);
   });
 }
-//buildVheightSlider();
+buildVheightSlider();
 
 //切换数据滤镜和垂直剖面图的标签
 $(".tab-btn").click(function() {
@@ -262,7 +262,7 @@ $(".tab-btn").click(function() {
     $("#form-vertical").attr('style', "display:block");
     $("#charts").attr('style', "display:block");
     airView.setVerticalShow();
-    buildVheightSlider();
+    //buildVheightSlider();
     reBuildImage();
   }
 });
@@ -341,17 +341,19 @@ function reBuildImage() {
   var reheight = $("input[name='vhRadios']:checked").val();
   var heightNum = $('#vertical-height').val();
 
-  //airView.setHeightEntSize();
+  airView.setHeightEntSize();
   airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
     heightNum, drawHeight);
 
   //airView.setLonEntSize(relon);
+  airView.setLonEntPosition(relon);
   airView.drawImage(chartArray[3].id, chartArray[3].name,
     chartArray[3].vtype,
     relon, drawLon);
 
 
   //airView.setLatEntSize(relat);
+  airView.setLatEntPosition(relat);
   airView.drawImage(chartArray[4].id, chartArray[4].name,
     chartArray[4].vtype,
     relat, drawLat);

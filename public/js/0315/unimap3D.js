@@ -109,7 +109,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
     color: "jet",
     realHeight: false,
     //realHeight: ("realHeight" in options) ? options.realHeight : true,
-    time: moment.utc("2017-05-20T06:00:00.000"),
+    time: moment.utc("2017-05-21T12:00:00.000"),
 
     //2017-05-19T06:00:00.000Z
     coverageId: "wrfchem_ll_4D",
@@ -211,7 +211,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
           130.95, 50.95),
 
         material: new Cesium.Color(0, 0, 0.51, 1),
-        height: 30000.0,
+        height: 10000.0,
       }
     });
   }
@@ -284,14 +284,19 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
   function setHeightEntPosition(nowNum) {
     console.log("setHeightEntPosition:" + nowNum);
-    heightEntity.rectangle.height = 30000.0 * nowNum;
+    heightEntity.rectangle.height = 30000.0 * (nowNum - 0.5);
     //水平剖面插在每个网格的中间
   }
 
   function setHeightEntSize() {
-    heightEntity.rectangle.coordinates = Cesium.Rectangle.fromDegrees(lonRange[
-        0], latRange[0],
-      lonRange[1], latRange[1]);
+    var xRange = new Array(2);
+    var yRange = new Array(2);
+    xRange[0] = lonRange[0] - 0.05;
+    yRange[0] = latRange[0] - 0.05;
+    xRange[1] = lonRange[1] + 0.05;
+    yRange[1] = latRange[1] + 0.05;
+    heightEntity.rectangle.coordinates = Cesium.Rectangle.fromDegrees(xRange[0],
+      yRange[0], xRange[1], yRange[1]);
   }
 
   function setLonImage(imgpath) {
@@ -300,20 +305,15 @@ function initViewer(eleID, dataServer, imageServer, options) {
   }
 
   function setLonEntPosition(nowNum) {
-    // console.log("lonPosition:(" + nowNum + "," + 15 + "," + nowNum +
-    //   "," + 50.95 + ")");
-    longEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray([
-      nowNum, 14.95, nowNum,
-      50.95
-    ]);
-  }
+    var yRange = new Array(2);
+    yRange[0] = latRange[0] - 0.05;
+    yRange[1] = latRange[1] + 0.05;
 
-  function setLonEntSize(num) {
-    //console.log(nowNum);
     longEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray([
-      num, latRange[0], num,
-      latRange[1]
+      nowNum, yRange[0], nowNum,
+      yRange[1]
     ]);
+
   }
 
   function setLatImage(imgpath) {
@@ -323,33 +323,32 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
   function setLatEntPosition(nowNum) {
     //latEntity.wall.material = imgpath;
+    var xRange = new Array(2);
+
+    xRange[0] = lonRange[0] - 0.05;
+
+    xRange[1] = lonRange[1] + 0.05;
 
     var wallLatArray = new Array();
 
 
     var deltaLon;
-    deltaLon = parseInt(longGrid.length / 10);
+    deltaLon = parseFloat((xRange[1] - xRange[0]) / 10);
     console.log(deltaLon);
 
     for (var i = 0; i <= 10; i++) {
-      wallLatArray[i * 2] = longGrid[i * deltaLon];
+      wallLatArray[i * 2] = xRange[0] + i * deltaLon;
       wallLatArray[i * 2 + 1] = nowNum;
 
     }
     //wallLatArray[20] = longGrid[10 * deltaLon - 1];
-    wallLatArray[0] = 84.95;
-    wallLatArray[20] = 130.95;
+    wallLatArray[0] = xRange[0];
+    wallLatArray[20] = xRange[1];
     console.log("newwall:" + wallLatArray);
     latEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray(wallLatArray);
   }
 
-  function setLatEntSize(num) {
-    //console.log(nowNum);
-    latEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray([
-      lonRange[0], num,
-      lonRange[1], num
-    ]);
-  }
+
   //剖面图示意实体的显示设置
   function setVerticalShow() {
     latEntity.show = true;
@@ -580,8 +579,6 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
       "Z%22)";
     var bottom_top = "bottom_top(" + data + ")";
-    //var lat_slicing = "Lat(" + data + ")";
-    //var long_slicing = "Long(" + data + ")";
     var range = "pm25";
     var format = "application/json";
     var dataType = bottom_top;
@@ -589,6 +586,9 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
     var ratio;
     var w, h;
+    var xRange = new Array(2);
+    var yRange = new Array(2);
+
 
     w = lonRange[1] - lonRange[0];
     h = latRange[1] - latRange[0];
@@ -635,30 +635,18 @@ function initViewer(eleID, dataServer, imageServer, options) {
           color: '#bebada'
         },
       };
-      var data = [trace1];
+      var data = [trace1, trace2];
 
       var layout = {
         xaxis: {
           range: [lonRange[0], lonRange[1]],
-          // showgrid: true,
-          //
-          // gridcolor: '#000000',
-          // gridwidth: 1,
-          //
-          // dtick: 0.1,
         },
         yaxis: {
           range: [latRange[0], latRange[1]],
-          // showgrid: true,
-          //
-          // gridcolor: '#000000',
-          // gridwidth: 1,
-          //
-          // dtick: 0.1,
         },
         paper_bgcolor: '#7f7f7f',
-        width: xAxis.length * 5,
-        height: yAxis.length * 5,
+        width: w * 50,
+        height: h * 50,
         margin: {
           l: 0,
           r: 0,
@@ -701,8 +689,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
         .then(
           function(gd) {
             Plotly.toImage(gd, {
-                width: xAxis.length * 5,
-                height: yAxis.length * 5,
+                width: w * 50,
+                height: h * 50,
               })
               .then(
                 function(url) {
@@ -711,8 +699,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
                   callback(url);
                   return Plotly.toImage(gd, {
                     format: 'png',
-                    width: xAxis.length * 5,
-                    height: yAxis.length * 5,
+                    width: w * 50,
+                    height: h * 50,
                   });
                 }
               )
@@ -1045,8 +1033,22 @@ function initViewer(eleID, dataServer, imageServer, options) {
   //由筛选条件显示格点
   function setShowRange(ranges) {
     latRange = ranges.latRange;
+    if (latRange[1] == 51) {
+      latRange[1] = 50.9;
+    } else latRange[1] = parseFloat(latRange[1]);
+    if (latRange[0] == 51) {
+      latRange[0] = 50.9;
+    } else latRange[0] = parseFloat(latRange[0]);
     //console.log(latRange);
     lonRange = ranges.lonRange;
+    if (lonRange[1] == 131) {
+      lonRange[1] = 130.9;
+    } else lonRange[1] = parseFloat(lonRange[1]);
+    if (lonRange[0] == 131) {
+      lonRange[0] = 130.9;
+    } else lonRange[0] = parseFloat(lonRange[0]);
+    console.log("lonRange at setShowRange:" + lonRange);
+
     heightRange = ranges.heightRange;
     var valRange = ranges.valRange;
     var layerName = configuration.overlayType;
@@ -1075,7 +1077,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
           if (lon <= lonRange[0] || lon >= lonRange[1]) {
             shouldShow = false;
           }
-          if (value <= valRange[0] || value >= valRange[1]) {
+          if (value <= valRange[0] || value >= 150) {
             shouldShow = false;
           }
           if (shouldShow) {
@@ -1089,6 +1091,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
         sourcs.show = false;
       }
     });
+
+
   };
 
   //切换地图
@@ -1134,9 +1138,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
     setLonImage: setLonImage,
     setHeightImage: setHeightImage,
     setLonEntPosition: setLonEntPosition,
-    setLonEntSize: setLonEntSize,
     setLatEntPosition: setLatEntPosition,
-    setLatEntSize: setLatEntSize,
     setHeightEntPosition: setHeightEntPosition,
     setHeightEntSize: setHeightEntSize,
     drawHeightImage: drawHeightImage,
