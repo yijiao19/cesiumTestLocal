@@ -239,8 +239,8 @@ function buildVheightSlider() {
   heightslider.on("slideStop", function(event) {
     var heightNum = $('#vertical-height').val();
     airView.setHeightEntPosition(heightNum - 0.5);
-    //console.log("buildVheightSlider");
-    //console.log(currentTime.utc());
+    //水平剖面插在每个网格的中间
+
     airView.drawHeightImage(chartArray[5].id, chartArray[5].name,
       heightNum, drawHeight);
   });

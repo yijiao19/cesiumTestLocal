@@ -144,23 +144,34 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
     //构建经纬度网格中心点坐标数组
     var i = 0;
-    latRange[0] = parseFloat(latRange[0]);
-    latRange[1] = parseFloat(latRange[1]);
-    for (var lat = latRange[0]; lat <= latRange[1]; lat += parseFloat(0.1)) {
-      lat = lat.toFixed(2);
+    for (var lat = latRange[0]; lat <= latRange[1]; lat += 0.1) {
+      //imgLat[i] = lat;
       latGrid[i++] = lat;
-      lat = parseFloat(lat);
     }
-    console.log(latGrid);
     i = 0;
-    lonRange[0] = parseFloat(lonRange[0]);
-    lonRange[1] = parseFloat(lonRange[1]);
-    for (var long = lonRange[0]; long <= lonRange[1]; long += parseFloat(0.1)) {
-      long = long.toFixed(2);
+    for (var long = lonRange[0]; long <= lonRange[1]; long += 0.1) {
+      //imgLon[i] = long;
       longGrid[i++] = long;
-      long = parseFloat(long);
     }
     console.log(longGrid);
+    // var i = 0;
+    // latRange[0] = parseFloat(latRange[0]);
+    // latRange[1] = parseFloat(latRange[1]);
+    // for (var lat = latRange[0]; lat <= latRange[1]; lat += parseFloat(0.1)) {
+    //   lat = lat.toFixed(2);
+    //   latGrid[i++] = lat;
+    //   lat = parseFloat(lat);
+    // }
+    // console.log(latGrid);
+    // i = 0;
+    // lonRange[0] = parseFloat(lonRange[0]);
+    // lonRange[1] = parseFloat(lonRange[1]);
+    // for (var long = lonRange[0]; long <= lonRange[1]; long += parseFloat(0.1)) {
+    //   long = long.toFixed(2);
+    //   longGrid[i++] = long;
+    //   long = parseFloat(long);
+    // }
+    // console.log(longGrid);
     // i = 0;
     // for (var gmp = 1; gmp <= 31; gmp++) {
     //   positionGrid[i++] = gmp;
@@ -200,7 +211,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
           130.95, 50.95),
 
         material: new Cesium.Color(0, 0, 0.51, 1),
-        height: 3000.0,
+        height: 30000.0,
       }
     });
   }
@@ -214,10 +225,10 @@ function initViewer(eleID, dataServer, imageServer, options) {
     // //绘制10个分隔点，保证wall是顺沿纬线绘制的
 
     var deltaLon;
-    deltaLon = parseInt(longGrid.length / 5);
+    deltaLon = parseInt(longGrid.length / 10);
     console.log(deltaLon);
 
-    for (var i = 0; i <= 5; i++) {
+    for (var i = 0; i <= 10; i++) {
       wallLatArray[i * 2] = longGrid[i * deltaLon];
       wallLatArray[i * 2 + 1] = latGrid[0];
       wallMinHeightArray[i] = 0;
@@ -225,7 +236,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
     }
     //wallLatArray[20] = longGrid[10 * deltaLon - 1];
     wallLatArray[0] = 84.95;
-    wallLatArray[10] = 130.95;
+    wallLatArray[20] = 130.95;
     console.log("origin:" + wallLatArray);
     //初始剖面位置
     var initLatNum = ("defaultLatEnt" in options) ? options.defaultLatEnt :
@@ -235,15 +246,10 @@ function initViewer(eleID, dataServer, imageServer, options) {
       show: false,
       name: 'vertical-lat',
       wall: {
-        //positions: Cesium.Cartesian3.fromDegreesArray(wallLatArray),
-        positions: Cesium.Cartesian3.fromDegreesArray([84.95, latRange[0],
-          130.95, latRange[0]
-        ]),
-        granularity: 0.01745,
-        maximumHeights: [900000, 900000],
-        minimumHeights: [0, 0],
-        // maximumHeights: wallMaxHeightArray,
-        // minimumHeights: wallMinHeightArray,
+        positions: Cesium.Cartesian3.fromDegreesArray(wallLatArray),
+
+        maximumHeights: wallMaxHeightArray,
+        minimumHeights: wallMinHeightArray,
         material: new Cesium.Color(0, 0, 0.51, 1),
 
       }
@@ -277,8 +283,9 @@ function initViewer(eleID, dataServer, imageServer, options) {
   }
 
   function setHeightEntPosition(nowNum) {
-    console.log(nowNum);
+    console.log("setHeightEntPosition:" + nowNum);
     heightEntity.rectangle.height = 30000.0 * nowNum;
+    //水平剖面插在每个网格的中间
   }
 
   function setHeightEntSize() {
@@ -321,17 +328,17 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
 
     var deltaLon;
-    deltaLon = parseInt(longGrid.length / 5);
+    deltaLon = parseInt(longGrid.length / 10);
     console.log(deltaLon);
 
-    for (var i = 0; i <= 5; i++) {
+    for (var i = 0; i <= 10; i++) {
       wallLatArray[i * 2] = longGrid[i * deltaLon];
       wallLatArray[i * 2 + 1] = nowNum;
 
     }
     //wallLatArray[20] = longGrid[10 * deltaLon - 1];
     wallLatArray[0] = 84.95;
-    wallLatArray[10] = 130.95;
+    wallLatArray[20] = 130.95;
     console.log("newwall:" + wallLatArray);
     latEntity.wall.positions = Cesium.Cartesian3.fromDegreesArray(wallLatArray);
   }
@@ -444,8 +451,6 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var img_jpg = d3.select("#img-export");
     var pollute = new Array();
 
-
-
     var coverageId = "wrfchem_ll_4D";
     var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
       "Z%22)";
@@ -501,11 +506,11 @@ function initViewer(eleID, dataServer, imageServer, options) {
         type: 'heatmap',
         x: xAxis,
         z: figure,
-        opacity: 0.4,
+        opacity: 1,
         zmax: 100,
         zmin: 0,
 
-        //zsmooth: 'best',
+        zsmooth: 'best',
         colorscale: 'Jet',
         showscale: false,
       };
@@ -514,16 +519,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
 
       var layout = {
         xaxis: {
-          range: [xRange[0], xRange[1]],
-          showgrid: true,
-
-          gridcolor: '#000000',
-          gridwidth: 1,
-          tick0: xRange[0],
-          dtick: 0.1,
+          range: [xRange[0], xRange[1]]
         },
-
-
         paper_bgcolor: '#7f7f7f',
         margin: {
           l: 0,
@@ -538,8 +535,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
         .then(
           function(gd) {
             Plotly.toImage(gd, {
-                height: 1000,
-                width: (xAxis.length * 10)
+                height: 900,
+                width: (xAxis.length * 5)
               })
               .then(
                 function(url) {
@@ -547,8 +544,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
                   callback(url);
                   return Plotly.toImage(gd, {
                     format: 'png',
-                    height: 1000,
-                    width: (xAxis.length * 10)
+                    height: 900,
+                    width: (xAxis.length * 5)
                   });
                 }
               )
@@ -559,6 +556,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
     });
 
   }
+
 
   //绘制水平剖面图+中国地图topojson
   function drawHeightImage(graphDiv, name, data, callback) {
@@ -619,11 +617,11 @@ function initViewer(eleID, dataServer, imageServer, options) {
         x: xAxis,
         y: yAxis,
         z: figure,
-        opacity: 0.5,
+        //opacity: 0.5,
         zmax: 100,
         zmin: 0,
 
-        //zsmooth: 'best',
+        zsmooth: 'best',
         colorscale: 'Jet',
         showscale: false,
       };
@@ -642,25 +640,25 @@ function initViewer(eleID, dataServer, imageServer, options) {
       var layout = {
         xaxis: {
           range: [lonRange[0], lonRange[1]],
-          showgrid: true,
-
-          gridcolor: '#000000',
-          gridwidth: 1,
-
-          dtick: 0.1,
+          // showgrid: true,
+          //
+          // gridcolor: '#000000',
+          // gridwidth: 1,
+          //
+          // dtick: 0.1,
         },
         yaxis: {
           range: [latRange[0], latRange[1]],
-          showgrid: true,
-
-          gridcolor: '#000000',
-          gridwidth: 1,
-
-          dtick: 0.1,
+          // showgrid: true,
+          //
+          // gridcolor: '#000000',
+          // gridwidth: 1,
+          //
+          // dtick: 0.1,
         },
         paper_bgcolor: '#7f7f7f',
-        width: 3600,
-        height: 4600,
+        width: xAxis.length * 5,
+        height: yAxis.length * 5,
         margin: {
           l: 0,
           r: 0,
@@ -703,8 +701,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
         .then(
           function(gd) {
             Plotly.toImage(gd, {
-                height: 4600,
-                width: 3600
+                width: xAxis.length * 5,
+                height: yAxis.length * 5,
               })
               .then(
                 function(url) {
@@ -713,8 +711,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
                   callback(url);
                   return Plotly.toImage(gd, {
                     format: 'png',
-                    height: 4600,
-                    width: 3600
+                    width: xAxis.length * 5,
+                    height: yAxis.length * 5,
                   });
                 }
               )
@@ -917,7 +915,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
   }
   //由层数找到高度
   function findHeight(level) {
-    return (level) * 30000.0;
+    return (level + 1) * 30000.0;
   }
   //将数据加载到地图上
   function load(builder, level) {
@@ -929,22 +927,22 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var maxValue = overlay.valueRange.max;
     //获取对应的色谱
     var pixColorScale = getPixColorScale();
-    latGrid = [];
-    longGrid = [];
-    var i = 0;
-    for (var lat = parseFloat(latRange[0]); lat <= parseFloat(latRange[1]); lat =
-      0.1 + parseFloat(lat)) {
-      lat = lat.toFixed(2);
-
-      latGrid[i++] = lat;
-    }
-    i = 0;
-    for (var long = parseFloat(lonRange[0]); long <= parseFloat(lonRange[1]); long =
-      0.1 + parseFloat(
-        long)) {
-      long = long.toFixed(2);
-      longGrid[i++] = long;
-    }
+    // latGrid = [];
+    // longGrid = [];
+    // var i = 0;
+    // for (var lat = parseFloat(latRange[0]); lat <= parseFloat(latRange[1]); lat =
+    //   0.1 + parseFloat(lat)) {
+    //   lat = lat.toFixed(2);
+    //
+    //   latGrid[i++] = lat;
+    // }
+    // i = 0;
+    // for (var long = parseFloat(lonRange[0]); long <= parseFloat(lonRange[1]); long =
+    //   0.1 + parseFloat(
+    //     long)) {
+    //   long = long.toFixed(2);
+    //   longGrid[i++] = long;
+    // }
 
     for (var i = 0; i < builder.length; i++)
       for (var j = 0; j < builder[i].length; j++) {
@@ -952,7 +950,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
         var tvalue = builder[i][j];
         if ((tvalue >= 30) && (tvalue <= maxValue)) {
           if (configuration.realHeight) {
-            height = positionGrid[level][i] * 100;
+            height = level * 30000;
           }
           var latitude = latGrid[i];
           var longitude = longGrid[j];
