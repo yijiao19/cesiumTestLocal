@@ -10,61 +10,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
   <title>空气质量3D网格化展示</title>
   <script src="/libs/d3/3.5.17/d3.min.js"></script>
-  <script src="/libs/Cesium/1.33/Cesium.js"></script>
-  <script src="/libs/plotly.js-1.31.2/dist/plotly.js"></script>
-
+  <script src="/libs/d3/d3.tip.js"></script>
+  <script src="/libs/Cesium/1.31/Cesium.js"></script>
   <style>
     @import url(/libs/bootstrap/css/bootstrap.min.css);
     @import url(/libs/bootstrap/plugins/bootstrap-slider/slider.css);
     @import url(/libs/bootstrap/plugins/bootstrap-select/bootstrap-select.min.css);
-    @import url(/libs/Cesium/1.33/Widgets/widgets.css);
-    @import url(/styles/d3chart.css);
-    #cesiumContainer {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    #toolbar {
-      display:block;
-      position: absolute;
-      top: 50px;
-      left: 20px;
-      width: 25%;
-      display: none;
-    }
-    #hideToolBar {
-        float:right;
-    }
-
-    .toolbar-right {
-      display: block;
-      position: absolute;
-      top: 3px;
-      right: 60px;
-    }
-
-    .toolbar-left {
-      display: block;
-      position: absolute;
-      top: 3px;
-      left: 10px;
-    }
-
-    .radio-pad {
-      padding-left: 10px;
-    }
-
-    .slider-selection,
-    .slider-selection.tick-slider-selection {
-      background-image: linear-gradient(to bottom, #3e8bf9 0, #4792f5 100%);
-    }
-
-    .slider-track {
-      background-image: linear-gradient(to bottom, #f5f5f5 0, #f9f9f9 100%);
-    }
+    @import url(/libs/Cesium/1.31/Widgets/widgets.css);
+    @import url(/styles/styles.css);
   </style>
 </head>
 
@@ -75,19 +28,18 @@
           <option value="satelliteMap">卫星+地形</option>
           <option value="streetMap">地图</option>
         </select>
-        <div id="showToolBar" class="toolbar-left cesium-button">滤镜</div>
+        <select id="selectLayer" class="toolbar-right cesium-button" style="display:none">
+            <option value="none">无</option>
+            <option value="interpolation">监测插值</option>
+            <option value="windTemp">风温场</option>
+        </select>
+        <div id="showToolBar" class="toolbar-left cesium-button">预报</div>
+        <div id="showMonitor" class="toolbar-left2 cesium-button">实况</div>
+        <div id="histogram"></div>
         <div id="charts" style="display:none">
           <div class="profile" id="chart1"></div>
           <div class="profile" id="chart2"></div>
           <div class="profile" id="chart3"></div>
-          <div class="profile" id="chart1-1"></div>
-          <div class="profile" id="chart2-1">
-
-          </div>
-          <div class="profile" id="chart3-1"></div>
-<image id="img-export"></image>
-          </div>
-          <div class="profile" id="plotlyDiv"></div>
         </div>
     </div>
   <div id="toolbar">
@@ -114,24 +66,34 @@
                 <div class="form-group">
                 <label for="vertical-height" class="col-sm-2 control-label">高度</label>
                 <div class="col-sm-10">
-                    <input id="vertical-height" type="text" class="slider" value="" data-slider-min="1" data-slider-max="30" data-slider-step="1"
-                    data-slider-value="1" />
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id=“r_100” value="100m" checked> 100m
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id="r_200" value="200m"> 200m
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id="r_500" value="500m"> 500m
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="vhRadios" id="r_1000" value="1000m"> 1000m
+                    </label>
                 </div>
                 </div>
                 <br />
                 <div class="form-group">
                 <label for="vertical-long" class="col-sm-2 control-label">经向</label>
                 <div class="col-sm-10">
-                    <input id="vertical-long" type="text" class="slider" value="" data-slider-min="84.95" data-slider-max="130.95" data-slider-step="0.1"
-                    data-slider-value="84.95" />
+                    <input id="vertical-long" type="text" class="slider" value="" data-slider-min="0" data-slider-max="193" data-slider-step="1"
+                    data-slider-value="119" />
                 </div>
                 </div>
                 <br />
                 <div class="form-group">
                 <label for="vertical-lat" class="col-sm-2 control-label">纬向</label>
                 <div class="col-sm-10">
-                    <input id="vertical-lat" type="text" class="slider" value="" data-slider-min="15" data-slider-max="51" data-slider-step="0.1"
-                    data-slider-value="15" />
+                    <input id="vertical-lat" type="text" class="slider" value="" data-slider-min="0" data-slider-max="193" data-slider-step="1"
+                    data-slider-value="100" />
                 </div>
                 </div>
             </form>
@@ -192,7 +154,7 @@
                 <div id="form-long" class="form-group">
                 <label for="long" id="long-label" class="col-sm-2 control-label">经度</label>
                 <div class="col-sm-10">
-                    <input id="long" type="text" class="slider" value="" data-slider-min="85" data-slider-max="130.9" data-slider-step="1" data-slider-value="[85,130.9]"
+                    <input id="long" type="text" class="slider" value="" data-slider-min="60" data-slider-max="150" data-slider-step="1" data-slider-value="[60,150]"
                     />
                 </div>
                 </div>
@@ -200,7 +162,7 @@
                 <div id="form-lat" class="form-group">
                 <label for="lat" id="lat-label" class="col-sm-2 control-label">纬度</label>
                 <div class="col-sm-10">
-                    <input id="lat" type="text" class="slider" value="" data-slider-min="15" data-slider-max="50.9" data-slider-step="1" data-slider-value="[15, 50.9]"
+                    <input id="lat" type="text" class="slider" value="" data-slider-min="0" data-slider-max="65" data-slider-step="1" data-slider-value="[0, 65]"
                     />
                 </div>
                 </div>
@@ -208,7 +170,7 @@
                 <div id="form-height" class="form-group">
                 <label for="height" id="height-label" class="col-sm-2 control-label">高度</label>
                 <div class="col-sm-10">
-                    <input id="height" type="text" class="slider" value="" data-slider-min="1" data-slider-max="30" data-slider-step="1" data-slider-value="[1,30]"
+                    <input id="height" type="text" class="slider" value="" data-slider-min="0" data-slider-max="15" data-slider-step="1" data-slider-value="[1,15]"
                     />
                 </div>
                 </div>
@@ -216,7 +178,7 @@
                 <div id="form-value" class="form-group">
                 <label for="ansi" id="ansi-label" class="col-sm-2 control-label">数值</label>
                 <div class="col-sm-10">
-                    <input id="ansi" type="text" class="slider" value="" data-slider-min="30" data-slider-max="200" data-slider-step="5" data-slider-value="[5,200]"
+                    <input id="ansi" type="text" class="slider" value="" data-slider-min="30" data-slider-max="600" data-slider-step="5" data-slider-value="[5,500]"
                     />
                 </div>
                 </div>
@@ -234,18 +196,10 @@
   <script type="text/javascript" src="/libs/lodash/3.10.1/lodash.min.js"></script>
   <script type="text/javascript" src="/libs/moment/moment.min.js"></script>
   <script type="text/javascript" src="/libs/bluebird/3.5.0/bluebird.min.js"></script>
-  <script type="text/javascript" src="/js/0315/colormap.min.js"></script>
-  <script type="text/javascript" src="/js/0315/factory.min.js"></script>
-  <script type="text/javascript" src="/js/0315/unimap3D.js"></script>
-  <script type="text/javascript" src="/js/0315/index.js"></script>
-  <script>
-      $("#showToolBar").click(function(){
-        $("#toolbar").fadeToggle("fast");
-      });
-      $("#hideToolBar").click(function(){
-        $("#toolbar").hide();
-      });
-  </script>
+  <script type="text/javascript" src="/js/0606/colormap.min.js"></script>
+  <script type="text/javascript" src="/js/0606/factory.min.js"></script>
+  <script type="text/javascript" src="/js/0606/unimap3D.js"></script>
+  <script type="text/javascript" src="/js/0606/index.js"></script>
 </body>
 
 </html>
