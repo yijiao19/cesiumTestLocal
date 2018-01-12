@@ -903,7 +903,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
   }
   //由层数找到高度
   function findHeight(level) {
-    return (level + 1) * 30000.0;
+    return (level + 0.5) * 30000.0;
   }
   //将数据加载到地图上
   function load(builder, level) {
