@@ -9,7 +9,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
   var terrainTMS; //地形服务
   //判断是否设置了卫星地图服务地址
   if (!("satelliteMapUrl" in options)) {
-    satelliteTMS = undefined
+    satelliteTMS = undefined;
   } else {
     satelliteTMS = new Cesium.UrlTemplateImageryProvider({
       url: options.satelliteMapUrl,
@@ -82,8 +82,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
           destination: Cesium.Cartesian3.fromDegrees(lon, lat,
             height)
         });
-      }, 500)
-    })
+      }, 500);
+    });
   }
 
   //设置不同地图的集合
@@ -101,7 +101,48 @@ function initViewer(eleID, dataServer, imageServer, options) {
   /*****************************************************************
    * 数据相关
    *****************************************************************/
-  //配置存储，根据配置请求数据
+  //配置存储，根据配置请求数据\
+
+  //从xml中读取coverageId信息、时间信息
+  function loadXml(url) {
+    //url = "http://172.18.0.15:8080/rasdaman/ows?service=WCS&version=2.0.1&request=DescribeCoverage&CoverageId=wrfchem_ll_4D";
+    if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+      xmlhttp = new XMLHttpRequest();
+    } else { // code for IE6, IE5
+      xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.open("GET", url, false);
+    xmlhttp.send();
+    xmlDoc = xmlhttp.responseXML;
+    return xmlDoc;
+  }
+
+  function loadCoverageId(url) {
+    xmlDoc = loadXml(url);
+
+    x = xmlDoc.getElementsByTagName('CoverageId');
+    var CoverageIdArr = new Array;
+    for (i = 0; i < x.length; i++) {
+      CoverageIdArr.push(x[i].childNodes[0].nodeValue);
+    }
+  }
+
+  function loadConTime(url) {
+    xmlDoc = loadXml(url);
+    x = xmlDoc.getElementsByTagName('lowerCorner')[0].childNodes[0].nodeValue ;
+    //<lowerCorner>"2017-05-19T06:00:00.000Z" 14.95 84.95 0.5</lowerCorner>
+
+    time = x.split(" ");
+    //"2017-05-22T15:00:00.000Z"
+
+    timeNow = time[0];
+    l = timeNow.length-2;
+    result = timeNow.substring(1,l);
+    // 2017-05-22T15:00:00.000
+
+    configuration.time =  moment.utc(result);
+
+  }
   var configuration = {
     overlayType: ("defaultOverlay" in options) ? options.defaultOverlay : "pm2_5",
     dataServerAddr: dataServer,
@@ -114,6 +155,9 @@ function initViewer(eleID, dataServer, imageServer, options) {
     //2017-05-19T06:00:00.000Z
     coverageId: "wrfchem_ll_4D",
   };
+//loadConTime("http://172.18.0.15:8080/rasdaman/ows?service=WCS&version=2.0.1&request=DescribeCoverage&CoverageId=wrfchem_ll_4D");
+
+
   //获取和设置信息
   function getConfig() {
     return configuration;
@@ -129,17 +173,23 @@ function initViewer(eleID, dataServer, imageServer, options) {
   }
 
   //---------------------------加载位置信息（经/纬/高度）------------------------------
+  //levelNum初始缺省值15，代码中通过控件属性值获取
+  var levelNum = 30;
   var positionGrid = new Array(15); //高度 15*[194*194]
   var latGrid = new Array(); //纬度 [194*194]
   var longGrid = new Array(); //经度 [194*194]
-  //var vertical_lonGrid; //经度数组 [194][194]
-  //var vertical_latGrid; //纬度数组 [194][194]
+
+
+
+  var levelArry = new Array();
 
   function buildGrid() {
     var urlArry = new Array();
-    for (var k = 0; k < 15; k++) {
+    levelNum = heightRange[1] - heightRange[0] + 1;
+    for (var k = 0; k < levelNum; k++) {
       var url = "/data/gmp/gmp-level" + k + ".json";
       urlArry.push(url);
+      levelArry.push("k");
     }
 
     //构建经纬度网格中心点坐标数组
@@ -154,31 +204,11 @@ function initViewer(eleID, dataServer, imageServer, options) {
       longGrid[i++] = long;
     }
     console.log(longGrid);
-    // var i = 0;
-    // latRange[0] = parseFloat(latRange[0]);
-    // latRange[1] = parseFloat(latRange[1]);
-    // for (var lat = latRange[0]; lat <= latRange[1]; lat += parseFloat(0.1)) {
-    //   lat = lat.toFixed(2);
-    //   latGrid[i++] = lat;
-    //   lat = parseFloat(lat);
-    // }
-    // console.log(latGrid);
-    // i = 0;
-    // lonRange[0] = parseFloat(lonRange[0]);
-    // lonRange[1] = parseFloat(lonRange[1]);
-    // for (var long = lonRange[0]; long <= lonRange[1]; long += parseFloat(0.1)) {
-    //   long = long.toFixed(2);
-    //   longGrid[i++] = long;
-    //   long = parseFloat(long);
-    // }
-    // console.log(longGrid);
-    // i = 0;
-    // for (var gmp = 1; gmp <= 31; gmp++) {
-    //   positionGrid[i++] = gmp;
-    // }
+
     //加载网格点高度数据
 
     var loadGmp = Promise.map(urlArry, function(url, index) {
+
       return Cesium.loadJson(url).then(function(jsonData) {
         positionGrid[index] = jsonData[0].data;
         return positionGrid;
@@ -195,8 +225,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
   var longEntity, latEntity;
   var heightEntity;
 
-  var latRange = [15, 50.9]; //网格中心点范围
-  var lonRange = [85, 130.9]; //网格中心点范围
+  var latRange = [30, 40]; //网格中心点范围
+  var lonRange = [110, 120]; //网格中心点范围
   var heightRange = [0, 1];
   //水平剖面
   function buildHeight() {
@@ -265,8 +295,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
       show: false,
       name: 'vertical-long',
       wall: {
-        positions: Cesium.Cartesian3.fromDegreesArray([longGrid[0], 14.95,
-          longGrid[0], 50.95
+        positions: Cesium.Cartesian3.fromDegreesArray([lonRange[0], latRange[0] - 0.05,
+          lonRange[0], latRange[1] - 0.05
         ]),
         maximumHeights: [900000, 900000],
         minimumHeights: [0, 0],
@@ -293,8 +323,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var yRange = new Array(2);
     xRange[0] = lonRange[0] - 0.05;
     yRange[0] = latRange[0] - 0.05;
-    xRange[1] = lonRange[1] + 0.05;
-    yRange[1] = latRange[1] + 0.05;
+    xRange[1] = lonRange[1] - 0.05;
+    yRange[1] = latRange[1] - 0.05;
     heightEntity.rectangle.coordinates = Cesium.Rectangle.fromDegrees(xRange[0],
       yRange[0], xRange[1], yRange[1]);
   }
@@ -407,10 +437,10 @@ function initViewer(eleID, dataServer, imageServer, options) {
         for (var j = 0; j < pollute[i].length; j++) {
           if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
         }
-      for (var i = 0; i < 360; i++) {
+      for (i = 0; i < 360; i++) {
         xAxis.push(14.95 + 0.1 * i);
       }
-      for (var i = 0; i < 30; i++) {
+      for (i = 0; i < 30; i++) {
         yAxis.push(84.95 + 0.1 * i);
       }
       //console.log(long);
@@ -477,7 +507,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
         break;
       case "lat":
         dataType = lat_slicing;
-        for (var i = 0; i < 460; i++) {
+        for (i = 0; i < 460; i++) {
           xAxis.push(85 + 0.1 * i);
         }
         xRange[0] = lonRange[0];
@@ -547,7 +577,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
                     width: (xAxis.length * 5)
                   });
                 }
-              )
+              );
           })
 
       ;
@@ -560,28 +590,31 @@ function initViewer(eleID, dataServer, imageServer, options) {
   //绘制水平剖面图+中国地图topojson
   function drawHeightImage(graphDiv, name, data, callback) {
     console.log(graphDiv);
-    var xAxis = new Array();
-    var yAxis = new Array();
-    for (var i = 0; i < 360; i++) {
-      yAxis.push(15 + 0.1 * i);
-    }
-    for (var i = 0; i < 460; i++) {
-      xAxis.push(85 + 0.1 * i);
-    }
+
 
     var id = "#" + graphDiv;
     var d3 = Plotly.d3.select(id);
     var img_jpg = d3.select("#img-export");
     var pollute = new Array();
 
-    var coverageId = "wrfchem_ll_4D";
-    //var ansi = "ansi(%222017-05-20T06:00:00.000Z%22)";
-    var ansi = "ansi(%22" + currentTime.utc().format("YYYY-MM-DDTHH:mm:ss.SSSS") +
-      "Z%22)";
-    var bottom_top = "bottom_top(" + data + ")";
-    var range = "pm25";
+    var coverageId = configuration.coverageId;
+    var polluteTime = getPolluteTime(configuration.time);
+    var heightLevel = "bottom_top(" + data + ")";
+    var lonSubset = "Long(" + (lonRange[0] - 0.05) + ',' + (
+      lonRange[1] - 0.05) + ")";
+    var latSubset = "Lat(" + (latRange[0] - 0.05) + ',' + (latRange[
+      1] - 0.05) + ")";
     var format = "application/json";
-    var dataType = bottom_top;
+    var geturl = configuration.dataServerAddr +
+      "&COVERAGEID=" + coverageId +
+      "&SUBSET=" + polluteTime +
+      "&SUBSET=" + latSubset +
+      "&SUBSET=" + lonSubset +
+      "&SUBSET=" + heightLevel +
+      "&RANGESUBSET=" + overlay.type +
+      "&FORMAT=" + format;
+
+
     var imgpath;
 
     var ratio;
@@ -594,23 +627,22 @@ function initViewer(eleID, dataServer, imageServer, options) {
     h = latRange[1] - latRange[0];
     ratio = w / h;
 
+    var xAxis = new Array();
+    var yAxis = new Array();
 
-    var srcPolluteJson =
-      "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage" +
-      "&COVERAGEID=" + coverageId + "&SUBSET=" + ansi + "&SUBSET=" +
-      dataType +
-      "&RANGESUBSET=" + range + "&FORMAT=" + format;
-    //var srcJson = "http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&RANGESUBSET=pm25&FORMAT=application/json";
-    console.log("unimap3D:drawHeightImage");
-
-    console.log(srcPolluteJson);
-    Plotly.d3.json(srcPolluteJson, function(figure) {
+    console.log(geturl);
+    Plotly.d3.json(geturl, function(figure) {
       pollute = figure;
       for (var i = 0; i < pollute.length; i++)
         for (var j = 0; j < pollute[i].length; j++) {
           if (pollute[i][j] > 1.0e+30) pollute[i][j] = null;
         }
-
+      for (var i = 0; i < pollute.length; i++) {
+        yAxis.push(latRange[0] + 0.05 + 0.1 * i);
+      }
+      for (var i = 0; i < pollute[0].length; i++) {
+        xAxis.push(lonRange[0] + 0.05 + 0.1 * i);
+      }
       //console.log(long);
       var trace1 = {
         type: 'heatmap',
@@ -703,7 +735,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
                     height: h * 50,
                   });
                 }
-              )
+              );
           })
 
       ;
@@ -738,9 +770,9 @@ function initViewer(eleID, dataServer, imageServer, options) {
   function removeLevels() {
     getOverlaySources().forEach(function(s) {
       viewer.dataSources.remove(s);
-    })
+    });
   }
-  buildLevels(overlay.levelNum);
+  buildLevels(levelNum);
 
   //PBLH层数据
   var pblhSource;
@@ -817,17 +849,19 @@ function initViewer(eleID, dataServer, imageServer, options) {
       var low = overlay.valueRange.min,
         high = overlay.valueRange.max;
       return function(num) {
-        var colorStr = col((num - low) / (high - low));
+        var ratio = (num - low) / (high - low);
+        if (ratio > 2.0) ratio = 2.0;
+        var colorStr = col(ratio);
         var rgbcolor = new Cesium.Color.fromCssColorString(colorStr);
         //var alpha = 1.0;
         var alpha = overlay.alphaScale(num);
         var rgbacolor = new Cesium.Color.fromAlpha(rgbcolor, alpha);
         return rgbacolor;
-      }
+      };
     } else {
       return function(num) {
-        return overlay.color(num)
-      }
+        return overlay.color(num);
+      };
     }
   }
   //在canvas中绘制色板
@@ -885,7 +919,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
       var entities = sourcs.entities;
       entities.values.forEach(function(pix) {
         pix.box.material.color = pixColorScale(pix.value.value);
-      })
+      });
     });
   }
 
@@ -915,28 +949,28 @@ function initViewer(eleID, dataServer, imageServer, options) {
     var maxValue = overlay.valueRange.max;
     //获取对应的色谱
     var pixColorScale = getPixColorScale();
-    // latGrid = [];
-    // longGrid = [];
-    // var i = 0;
-    // for (var lat = parseFloat(latRange[0]); lat <= parseFloat(latRange[1]); lat =
-    //   0.1 + parseFloat(lat)) {
-    //   lat = lat.toFixed(2);
-    //
-    //   latGrid[i++] = lat;
-    // }
-    // i = 0;
-    // for (var long = parseFloat(lonRange[0]); long <= parseFloat(lonRange[1]); long =
-    //   0.1 + parseFloat(
-    //     long)) {
-    //   long = long.toFixed(2);
-    //   longGrid[i++] = long;
-    // }
+    latGrid = [];
+    longGrid = [];
+    var i = 0;
+    for (var lat = parseFloat(latRange[0]); lat <= parseFloat(latRange[1]); lat =
+      0.1 + parseFloat(lat)) {
+      lat = lat.toFixed(2);
+
+      latGrid[i++] = lat;
+    }
+    i = 0;
+    for (var long = parseFloat(lonRange[0]); long <= parseFloat(lonRange[1]); long =
+      0.1 + parseFloat(
+        long)) {
+      long = long.toFixed(2);
+      longGrid[i++] = long;
+    }
 
     for (var i = 0; i < builder.length; i++)
       for (var j = 0; j < builder[i].length; j++) {
 
         var tvalue = builder[i][j];
-        if ((tvalue >= 30) && (tvalue <= maxValue)) {
+        if ((tvalue >= 30) && (tvalue <= 1000)) {
           if (configuration.realHeight) {
             height = level * 30000;
           }
@@ -977,28 +1011,29 @@ function initViewer(eleID, dataServer, imageServer, options) {
   var loadData = function() {
     console.log("loadData");
     var urls = overlay.paths();
-    urls.forEach(function(url, index) {
+    levelArry.forEach(function(url, index) {
       (function(a, b) {
         //"http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&SUBSET=ansi(%222017-05-19T06:00:00.000Z%22)&SUBSET=bottom_top(0.5)&RANGESUBSET=pm25&FORMAT=application/json"
         //"http://172.18.0.15:8080/rasdaman/ows?&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=wrfchem_ll_4D&SUBSET=ansi(%222017-05-20T06:00:00.000Z%22)&SUBSET=Lat(14.95,50.95)&SUBSET=Long(100,130.95)&SUBSET=bottom_top(0.5)&RANGESUBSET=pm25&FORMAT=image/png
         var coverageId = configuration.coverageId;
         var polluteTime = getPolluteTime(configuration.time);
         var heightLevel = "bottom_top(" + (0.5 + b) + ")";
-        // var lonSubset = "Long(" + (lonRange[0] - 0.05) + ',' + (
-        //   lonRange[1] - 0.05) + ")";
-        // var latSubset = "Lat(" + (latRange[0] - 0.05) + ',' + (latRange[
-        //   1] - 0.05) + ")";
+        var lonSubset = "Long(" + (lonRange[0] - 0.05) + ',' + (
+          lonRange[1] - 0.05) + ")";
+        var latSubset = "Lat(" + (latRange[0] - 0.05) + ',' + (latRange[
+          1] - 0.05) + ")";
         var geturl = configuration.dataServerAddr +
           "&COVERAGEID=" + coverageId +
           "&SUBSET=" + polluteTime +
-          //"&SUBSET=" + latSubset +
-          //  "&SUBSET=" + lonSubset +
+          "&SUBSET=" + latSubset +
+          "&SUBSET=" + lonSubset +
           "&SUBSET=" + heightLevel +
           "&RANGESUBSET=" + overlay.type +
           "&FORMAT=" + "application/json";
         console.log(geturl);
         //console.log(heightLevel);
         //var geturl = "/data/current-" + a;
+
         Cesium.loadJson(geturl).then(function(jsonData) {
           load(overlay.data(jsonData), b);
         }).otherwise(function(error) {
@@ -1006,8 +1041,8 @@ function initViewer(eleID, dataServer, imageServer, options) {
         });
       })
       (url, index);
-    })
-  }
+    });
+  };
 
   /*****************************************************************
    * 面向控制的接口
@@ -1017,7 +1052,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
     //移除原来的数据源
     removeLevels();
     //创建数据源
-    buildLevels(overlay.levelNum);
+    buildLevels(levelNum);
     //加载数据
     loadData();
 
@@ -1031,7 +1066,45 @@ function initViewer(eleID, dataServer, imageServer, options) {
   }
 
   //由筛选条件显示格点
+  function setvalueShow(valArr) {
+    console.log("setvalueShow");
+
+
+    valRange = valArr.valRange;
+
+    getOverlaySources().forEach(function(sourcs) {
+      var level = parseInt(sourcs.name.split("-")[1]) + 1;
+      if (level >= heightRange[0] && level <= heightRange[1]) {
+        sourcs.show = true;
+        var entities = sourcs.entities;
+        entities.suspendEvents();
+        var billboardsList = entities.values;
+        billboardsList.forEach(function(val, index, arr) {
+
+          var value = val.value.value;
+          //console.log(value);
+          var shouldShow = true;
+
+          if (value <= valRange[0] || value >= 150) {
+            shouldShow = false;
+          }
+          if (shouldShow) {
+            val.show = true;
+          } else {
+            val.show = false;
+          }
+        });
+        entities.resumeEvents();
+      } else {
+        sourcs.show = false;
+      }
+    });
+  }
+
   function setShowRange(ranges) {
+
+    //reloadData();
+
     latRange = ranges.latRange;
     if (latRange[1] == 51) {
       latRange[1] = 50.9;
@@ -1050,6 +1123,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
     console.log("lonRange at setShowRange:" + lonRange);
 
     heightRange = ranges.heightRange;
+    levelNum = heightRange[1] - heightRange[0] + 1;
     var valRange = ranges.valRange;
     var layerName = configuration.overlayType;
     if (layerName == "temp") {
@@ -1058,42 +1132,40 @@ function initViewer(eleID, dataServer, imageServer, options) {
       ];
     }
 
-    getOverlaySources().forEach(function(sourcs) {
-      var level = parseInt(sourcs.name.split("-")[1]) + 1;
-      if (level >= heightRange[0] && level <= heightRange[1]) {
-        sourcs.show = true;
-        var entities = sourcs.entities;
-        entities.suspendEvents();
-        var billboardsList = entities.values;
-        billboardsList.forEach(function(val, index, arr) {
-          var lat = val.value.lat;
-          var lon = val.value.lon;
-          var value = val.value.value;
-          //console.log(value);
-          var shouldShow = true;
-          if (lat <= latRange[0] || lat >= latRange[1]) {
-            shouldShow = false;
-          }
-          if (lon <= lonRange[0] || lon >= lonRange[1]) {
-            shouldShow = false;
-          }
-          if (value <= valRange[0] || value >= 150) {
-            shouldShow = false;
-          }
-          if (shouldShow) {
-            val.show = true;
-          } else {
-            val.show = false;
-          }
-        });
-        entities.resumeEvents();
-      } else {
-        sourcs.show = false;
-      }
-    });
+    reloadData();
+
+    //setvalueShow(ranges);
+
+    // getOverlaySources().forEach(function(sourcs) {
+    //   var level = parseInt(sourcs.name.split("-")[1]) + 1;
+    //   if (level >= heightRange[0] && level <= heightRange[1]) {
+    //     sourcs.show = true;
+    //     var entities = sourcs.entities;
+    //     entities.suspendEvents();
+    //     var billboardsList = entities.values;
+    //     billboardsList.forEach(function(val, index, arr) {
+    //
+    //       var value = val.value.value;
+    //       //console.log(value);
+    //       var shouldShow = true;
+    //
+    //       if (value <= valRange[0] || value >= valRange[1]) {
+    //         shouldShow = false;
+    //       }
+    //       if (shouldShow) {
+    //         val.show = true;
+    //       } else {
+    //         val.show = false;
+    //       }
+    //     });
+    //     entities.resumeEvents();
+    //   } else {
+    //     sourcs.show = false;
+    //   }
+    // });
 
 
-  };
+  }
 
   //切换地图
   function changeMap(mapName) {
@@ -1127,7 +1199,7 @@ function initViewer(eleID, dataServer, imageServer, options) {
       buildVlat();
       buildVlon();
       loadData();
-    })
+    });
   }
 
   return {
@@ -1153,10 +1225,11 @@ function initViewer(eleID, dataServer, imageServer, options) {
     setVerticalShow: setVerticalShow,
     setVerticalHide: setVerticalHide,
     setShowRange: setShowRange,
+    setvalueShow: setvalueShow,
     setOverlay: setOverlay,
     getOverlay: getOverlay,
     showPBLH: showPBLH,
     hidePBLH: hidePBLH,
     start: start
-  }
+  };
 }

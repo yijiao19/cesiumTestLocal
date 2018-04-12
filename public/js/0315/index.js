@@ -9,22 +9,39 @@ var airView = initViewer('#cesiumContainer',
     defaultLonEnt: 119,
     defaultLatEnt: 100,
     realHeight: false
-      //realHeight: true
-  })
-airView.setFocus(119, 40, 10000000.0);
-airView.start();
-setTimeBar();
+    //realHeight: true
+  });
+airView.setFocus(115, 35, 1500000.0);
+// airView.setShowRange({
+//   latRange: $('#lat').val().split(","),
+//   lonRange: $('#long').val().split(","),
+//   heightRange: $('#height').val().split(","),
+//   valRange: $('#ansi').val().split(",")
+// });
+// airView.start();
+// setTimeBar();
 
 //--------------------经/纬/高/值筛选器-----------------------------------------------
-var filterArray = ["#lat", "#long", "#height", "#ansi"];
+var filterArray = ["#lat", "#long", "#height"];
 //创建筛选器
 function buildFilters(farray) {
+  var tmpslider = $("#ansi").slider({
+    tooltip: 'always',
+    tooltip_position: 'bottom',
+  });
+  tmpslider.on("slide slideStop", function(event) {
+    airView.setvalueShow({
+      valRange: $('#ansi').val().split(",")
+    });
+  });
+
   farray.forEach(function(val) {
     var tmpslider = $(val).slider({
       tooltip: 'always',
       tooltip_position: 'bottom',
     });
     tmpslider.on("slide slideStop", function(event) {
+
       airView.setShowRange({
         latRange: $('#lat').val().split(","),
         lonRange: $('#long').val().split(","),
@@ -36,9 +53,22 @@ function buildFilters(farray) {
       //reBuildImage();
 
     });
-  })
+  });
+  airView.setvalueShow({
+    valRange: $('#ansi').val().split(",")
+  });
+  airView.setShowRange({
+    latRange: $('#lat').val().split(","),
+    lonRange: $('#long').val().split(","),
+    heightRange: $('#height').val().split(","),
+    valRange: $('#ansi').val().split(",")
+  });
 }
 buildFilters(filterArray);
+
+
+airView.start();
+setTimeBar();
 
 //选择不同高度时显示不同datasource
 $("[name=pollutRadios]").on('click', function() {
@@ -55,6 +85,9 @@ $("[name=pollutRadios]").on('click', function() {
     tooltip_position: 'bottom'
   });
   $("#ansi").on("slide", function(slideEvt) {
+    airView.setvalueShow({
+      valRange: $('#ansi').val().split(",")
+    });
     airView.setShowRange({
       latRange: $('#lat').val().split(","),
       lonRange: $('#long').val().split(","),
@@ -65,12 +98,12 @@ $("[name=pollutRadios]").on('click', function() {
   });
   airView.reloadData();
   //reBuildImage();
-})
+});
 
 $("[name='pblhcheck']").on('click', function() {
   var checked = $("input[name='pblhcheck']").is(':checked');
   checked ? airView.showPBLH() : airView.hidePBLH();
-})
+});
 
 //-------------------时间导航---------------------------------------------------------
 var currentTime;
@@ -93,18 +126,18 @@ function setConfigTime(num) {
 $("#nav-forward").click(function(event) {
   event.preventDefault();
   setConfigTime(1);
-})
+});
 $("#nav-forward-more").on("click", function(event) {
   event.preventDefault();
-  setConfigTime(24)
+  setConfigTime(24);
 });
 $("#nav-backward").on("click", function(event) {
   event.preventDefault();
-  setConfigTime(-1)
+  setConfigTime(-1);
 });
 $("#nav-backward-more").on("click", function(event) {
   event.preventDefault();
-  setConfigTime(-24)
+  setConfigTime(-24);
 });
 
 //--------------------------设置色度板及地图变更------------------------------------
@@ -115,11 +148,11 @@ function initColorBar() {
   d3.select("#colorArray").selectAll("option")
     .data(colors).enter()
     .append("option").text(function(d) {
-      return d
+      return d;
     });
   //在色板元素上创建canvas
   var width = document.body.offsetWidth * 0.25 * 0.7;
-  var colorBar = d3.select('#colorbar').append('canvas').attr("width", width).attr(
+  var colorBar = d3.select('#colorbar').append('canvas').attr("id", "colorbarCanvas").attr("width", width).attr(
     "height", 20);
 
   //绘制颜色比例尺
@@ -132,6 +165,20 @@ function initColorBar() {
   });
 }
 initColorBar();
+
+//设置监听，使颜色比例尺随窗口大小变化尺寸
+$(window).resize(resizeCanvas);
+
+function resizeCanvas() {
+
+  var width = document.body.offsetWidth * 0.25 * 0.7;
+  var colorBar = d3.select('#colorbarCanvas').attr("width", width);
+
+  airView.renderColorScale($("#colorArray option:selected").val(), colorBar);
+
+}
+
+//resizeCanvas();
 
 //绑定地图的change事件，当选择不同的地图时调用 SelectChange()方法
 $("#selectMap").change(function() {
@@ -195,13 +242,16 @@ function drawLat(pathhh) {
 
 function drawHeight(pathhh) {
   airView.setHeightImage(pathhh);
+  //airView.setHeightImage("../images/testcolor.png");
 }
 
 //根据网格数据设置剖面的位置、图像
 function buildVlonSlider() {
+
   longslider = $("#vertical-long").slider({
     tooltip: 'always',
     tooltip_position: 'bottom',
+
   });
   longslider.on("slideStop", function(event) {
     var lonNum = $('#vertical-long').val();
@@ -209,24 +259,27 @@ function buildVlonSlider() {
     airView.setLonEntPosition(lonNum);
     airView.drawImage(chartArray[3].id, chartArray[3].name, chartArray[3].vtype,
       lonNum, drawLon);
-
+    $('#vertical-long').val(lonNum + 1);
   });
 }
-
-
 buildVlonSlider();
 
 function buildVlatSlider() {
+
   latslider = $("#vertical-lat").slider({
     tooltip: 'always',
     tooltip_position: 'bottom',
+
   });
+
   latslider.on("slideStop", function(event) {
+
     var latNum = $('#vertical-lat').val();
     airView.setLatEntPosition(latNum);
     console.log("lat" + latNum);
     airView.drawImage(chartArray[4].id, chartArray[4].name, chartArray[4].vtype,
       latNum, drawLat);
+    $('#vertical-lat').val(latNum + 1);
   });
 }
 buildVlatSlider();
@@ -247,6 +300,16 @@ function buildVheightSlider() {
 }
 buildVheightSlider();
 
+//设置剖面图slider的属性
+function setSlider() {
+  var latRange = $('#lat').val().split(",");
+  var relatnum = parseFloat(latRange[0]);
+  var lonRange = $('#long').val().split(",");
+  var relonnum = parseFloat(lonRange[0]);
+
+  latslider.slider('setValue', relatnum);
+  longslider.slider('setValue', relonnum);
+}
 //切换数据滤镜和垂直剖面图的标签
 $(".tab-btn").click(function() {
   $(".tab-btn").removeClass("btn-primary");
@@ -262,6 +325,8 @@ $(".tab-btn").click(function() {
     $("#form-vertical").attr('style', "display:block");
     $("#charts").attr('style', "display:block");
     airView.setVerticalShow();
+    setSlider();
+
     //buildVheightSlider();
     reBuildImage();
   }
@@ -328,14 +393,15 @@ function initProfile() {
           filter: "alpha(opacity=80)",
           "-moz-opacity": "0.8",
           "-khtml-opacity": "0.8"
-        })
-      })
-  })
+        });
+      });
+  });
 }
 
 initProfile();
 
 function reBuildImage() {
+
   var relon = $('#vertical-long').val();
   var relat = $('#vertical-lat').val();
   var reheight = $("input[name='vhRadios']:checked").val();
@@ -359,8 +425,4 @@ function reBuildImage() {
     relat, drawLat);
 
 
-
-  //$("#longImage").attr("href", airView.buildImagePath("lon", relon));
-  //$("#latImage").attr("href", airView.buildImagePath("lat", relat));
-  //$("#horiImage").attr("href", airView.buildImagePath("h", reheight));
 }
